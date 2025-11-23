@@ -16,6 +16,8 @@
 
 #if defined(MICRO_FAMILY_ESP32C3)
 // ESP32-C3 (RISC-V) interrupt control
+// Include asm_compat.h first to ensure 'asm' keyword is recognized
+#include "asm_compat.h"
 #include "riscv/csr.h"
 #include "riscv/encoding.h"  // For MSTATUS_MIE
 

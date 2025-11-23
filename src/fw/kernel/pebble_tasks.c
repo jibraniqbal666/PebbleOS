@@ -164,6 +164,7 @@ QueueHandle_t pebble_task_get_to_queue(PebbleTask task) {
 
 void pebble_task_create(PebbleTask pebble_task, TaskParameters_t *task_params,
                         TaskHandle_t *handle) {
+#if !defined(MICRO_FAMILY_ESP32C3)
   MpuRegion app_region;
   MpuRegion worker_region;
   switch (pebble_task) {
@@ -218,6 +219,7 @@ void pebble_task_create(PebbleTask pebble_task, TaskParameters_t *task_params,
     default:
       WTF;
   }
+#endif
 
 #if defined(MICRO_FAMILY_ESP32C3)
   // ESP32-C3 doesn't have MPU, use regular xTaskCreateStatic instead of xTaskCreateRestricted
