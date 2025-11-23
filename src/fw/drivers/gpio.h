@@ -23,6 +23,7 @@
 #define STM32F7_COMPATIBLE
 #define NRF5_COMPATIBLE
 #define SF32LB52_COMPATIBLE
+#define ESP32C3_COMPATIBLE
 #include <mcu.h>
 
 #include "board/board.h"
@@ -47,10 +48,39 @@ typedef enum {
   GPIO_Speed_200MHz
 } GPIOSpeed_TypeDef;
 
+#elif defined(MICRO_FAMILY_ESP32C3)
+// ESP32-C3 GPIO type definitions (similar to NRF5)
+// ESP32-C3 doesn't use ARM-specific GPIO types
+
+typedef enum {
+  GPIO_OType_PP,
+  GPIO_OType_OD,
+} GPIOOType_TypeDef;
+
+typedef enum {
+  GPIO_PuPd_NOPULL,
+  GPIO_PuPd_UP,
+  GPIO_PuPd_DOWN,
+} GPIOPuPd_TypeDef;
+
+typedef enum {
+  GPIO_Speed_2MHz,
+  GPIO_Speed_50MHz,
+  GPIO_Speed_200MHz
+} GPIOSpeed_TypeDef;
+
+// Forward declaration for GPIO port (ESP32-C3 doesn't use GPIO_TypeDef)
+typedef void GPIO_TypeDef;
+
 #endif
 
 #ifdef MICRO_FAMILY_NRF5
 
+void gpio_use(uint32_t pin);
+void gpio_release(uint32_t pin);
+
+#elif defined(MICRO_FAMILY_ESP32C3)
+// ESP32-C3 GPIO functions use pin numbers, not GPIO port pointers
 void gpio_use(uint32_t pin);
 void gpio_release(uint32_t pin);
 
@@ -77,7 +107,7 @@ void gpio_output_init(const OutputConfig *pin_config, GPIOOType_TypeDef otype,
 //! is true, and drives it low if pin_config.active_high is false.
 void gpio_output_set(const OutputConfig *pin_config, bool asserted);
 
-#ifndef MICRO_FAMILY_NRF5
+#if !defined(MICRO_FAMILY_NRF5) && !defined(MICRO_FAMILY_ESP32C3)
 
 //! Configure a GPIO alternate function.
 //!

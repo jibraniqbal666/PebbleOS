@@ -36,12 +36,11 @@
 
 #if defined(MICRO_FAMILY_ESP32C3)
 #include "sdkconfig.h"
+// Include asm_compat.h FIRST before any ESP-IDF headers that use 'asm' keyword
 #include "asm_compat.h"
-#include "riscv/csr.h"
+// Use ESP-IDF's utility function instead of direct CSR access to avoid assembler issues
+#include "riscv/rv_utils.h"
 // ESP32-C3 uses RISC-V cycle counter (mcycle CSR = 0xB00) instead of ARM DWT
-#ifndef CSR_MCYCLE
-#define CSR_MCYCLE 0xB00  // RISC-V standard mcycle CSR
-#endif
 #define ESP32C3_CPU_FREQ_MHZ CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
 #define ESP32C3_CPU_FREQ_HZ (ESP32C3_CPU_FREQ_MHZ * 1000000ULL)
 #endif
@@ -108,8 +107,8 @@ void profiler_init(void) {
 void profiler_start(void) {
 #if defined(MICRO_FAMILY_ESP32C3)
   // ESP32-C3 uses RISC-V cycle counter (mcycle CSR = 0xB00)
-  // Reset cycle counter by reading it (it's always counting)
-  g_profiler.start = RV_READ_CSR(CSR_MCYCLE);
+  // Use ESP-IDF's utility function which handles the CSR read properly
+  g_profiler.start = rv_utils_get_cycle_count();
 #else
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
 #ifdef MICRO_FAMILY_STM32F7
@@ -124,7 +123,8 @@ void profiler_start(void) {
 void profiler_stop(void) {
 #if defined(MICRO_FAMILY_ESP32C3)
   // ESP32-C3 uses RISC-V cycle counter (mcycle CSR = 0xB00)
-  g_profiler.end = RV_READ_CSR(CSR_MCYCLE);
+  // Use ESP-IDF's utility function which handles the CSR read properly
+  g_profiler.end = rv_utils_get_cycle_count();
 #else
   g_profiler.end = DWT->CYCCNT;
 #endif

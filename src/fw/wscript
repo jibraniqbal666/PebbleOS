@@ -611,6 +611,10 @@ def _build_recovery(bld):
                 'process_management/app_menu_data_source.c',
                 'resource/resource_storage_file.c']
 
+    # Exclude ARM-specific core dump for ESP32-C3
+    if bld.is_esp32c3():
+        excludes.append('kernel/core_dump.c')
+
     if 'MFG_INFO_RECORDS_TEST_RESULTS' not in bld.env.DEFINES:
         excludes.extend('mfg/results_ui.c')
 
@@ -744,6 +748,10 @@ def _build_normal(bld):
         source_dirs.append('apps/demo_apps/gfx_tests')
 
     excludes.extend(_get_launcher_globs_to_exclude(bld))
+
+    # Exclude ARM-specific core dump for ESP32-C3
+    if bld.is_esp32c3():
+        excludes.append('kernel/core_dump.c')
 
     if not bld.capability('HAS_BUILTIN_HRM'):
         excludes.append('popups/ble_hrm/**')

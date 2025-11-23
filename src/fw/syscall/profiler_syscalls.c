@@ -24,12 +24,14 @@
 #include <mcu.h>
 
 #if defined(MICRO_FAMILY_ESP32C3)
-#include "riscv/csr.h"
+// Include asm_compat.h FIRST before any ESP-IDF headers that use 'asm' keyword
+#include "asm_compat.h"
+#include "riscv/rv_utils.h"
 // RISC-V cycle counter (mcycle CSR)
+// Use ESP-IDF's utility function which handles the CSR read properly
 static inline uint32_t riscv_read_cycle_counter(void) {
-  uint32_t cycles;
-  __asm__ __volatile__ ("csrr %0, mcycle" : "=r" (cycles));
-  return cycles;
+  // Use ESP-IDF's rv_utils_get_cycle_count() which properly reads mcycle CSR
+  return rv_utils_get_cycle_count();
 }
 #endif
 

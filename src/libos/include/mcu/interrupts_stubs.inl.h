@@ -16,23 +16,26 @@
 
 #if defined(MICRO_FAMILY_ESP32C3)
 // ESP32-C3 (RISC-V) interrupt control
-// Include asm_compat.h first to ensure 'asm' keyword is recognized
+// Include asm_compat.h FIRST before any ESP-IDF headers that use 'asm' keyword
 #include "asm_compat.h"
-#include "riscv/csr.h"
-#include "riscv/encoding.h"  // For MSTATUS_MIE
+// Use FreeRTOS critical section macros instead of direct CSR manipulation
+// to avoid assembler issues with zicsr extension
+#include "freertos/portmacro.h"
 
 static inline void mcu_state_disable_interrupts(void) {
-  // Disable interrupts globally using RISC-V CSR
-  // Clear mstatus.MIE (Machine Interrupt Enable) bit (bit 3 = 0x8)
+  // Disable interrupts globally using FreeRTOS port macros
   // This is equivalent to ARM's __disable_irq()
-  RV_CLEAR_CSR(mstatus, MSTATUS_MIE);
+  // Note: portDISABLE_INTERRUPTS() uses portSET_INTERRUPT_MASK_FROM_ISR()
+  // which properly handles the interrupt mask
+  portDISABLE_INTERRUPTS();
 }
 
 static inline void mcu_state_enable_interrupts(void) {
-  // Enable interrupts globally using RISC-V CSR
-  // Set mstatus.MIE (Machine Interrupt Enable) bit (bit 3 = 0x8)
+  // Enable interrupts globally using FreeRTOS port macros
   // This is equivalent to ARM's __enable_irq()
-  RV_SET_CSR(mstatus, MSTATUS_MIE);
+  // Note: portENABLE_INTERRUPTS() uses portCLEAR_INTERRUPT_MASK_FROM_ISR()
+  // which properly handles the interrupt mask
+  portENABLE_INTERRUPTS();
 }
 #else
 // Generic non-ARM implementation (stub)

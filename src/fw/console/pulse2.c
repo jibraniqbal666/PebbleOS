@@ -46,6 +46,12 @@
 #include "queue.h"
 #include "task.h"
 
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "kernel/portmacro_esp32c3.h"
+#else
+#include "portmacro.h"
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
