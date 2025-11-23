@@ -80,7 +80,9 @@ DEFINE_SYSCALL(void, sys_event_service_client_subscribe, EventServiceInfo *handl
     event_queue = (QueueHandle_t *)worker_manager_get_task_context()->to_process_event_queue;
   } else if (task == PebbleTask_KernelMain) {
     // The event service always runs from KernelMain
-    event_queue = event_kernel_to_kernel_event_queue();
+    static QueueHandle_t kernel_queue;
+    kernel_queue = event_kernel_to_kernel_event_queue();
+    event_queue = &kernel_queue;
   } else {
     WTF;
   }

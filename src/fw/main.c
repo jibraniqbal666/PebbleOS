@@ -197,12 +197,14 @@ int main(void) {
   enable_mcu_debugging();
 #endif
 
+#if !defined(MICRO_FAMILY_ESP32C3)
   extern void * __ISR_VECTOR_TABLE__;  // Defined in linker script
   SCB->VTOR = (uint32_t)&__ISR_VECTOR_TABLE__;
 
   NVIC_SetPriorityGrouping(3); // 4 bits for group priority; 0 bits for subpriority
 
   enable_fault_handlers();
+#endif
 
   kernel_heap_init();
 
@@ -263,11 +265,11 @@ int main(void) {
   stop_mode_disable(InhibitorMain);
 
   // Turn off power to internal flash when in stop mode
-#if !MICRO_FAMILY_NRF5 && !MICRO_FAMILY_SF32LB52
+#if !MICRO_FAMILY_NRF5 && !MICRO_FAMILY_SF32LB52 && !defined(MICRO_FAMILY_ESP32C3)
   periph_config_enable(PWR, RCC_APB1Periph_PWR);
 #endif
   pwr_flash_power_down_stop_mode(true /* power_down */);
-#if !MICRO_FAMILY_NRF5 && !MICRO_FAMILY_SF32LB52
+#if !MICRO_FAMILY_NRF5 && !MICRO_FAMILY_SF32LB52 && !defined(MICRO_FAMILY_ESP32C3)
   periph_config_disable(PWR, RCC_APB1Periph_PWR);
 #endif
 

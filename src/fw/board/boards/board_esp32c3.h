@@ -244,10 +244,25 @@ static const BoardConfigSharpDisplay BOARD_CONFIG_DISPLAY = {
 void board_early_init(void);
 void board_init(void);
 
+// Forward declarations for driver types (matching other board headers)
+typedef const struct UARTDevice UARTDevice;
+typedef const struct SPIBus SPIBus;
+typedef const struct SPISlavePort SPISlavePort;
+typedef const struct I2CBus I2CBus;
+typedef const struct I2CSlavePort I2CSlavePort;
+typedef const struct HRMDevice HRMDevice;
+typedef const struct MicDevice MicDevice;
+typedef const struct QSPIPort QSPIPort;
+typedef const struct QSPIFlash QSPIFlash;
+typedef const struct VoltageMonitorDevice VoltageMonitorDevice;
+typedef const struct AnalogTemperatureSensor AnalogTemperatureSensor;
+
+// SPI peripheral clock enum (stub for ESP32-C3)
+typedef enum {
+  SpiPeriphClockESP32C3
+} SpiPeriphClock;
+
 // UART device declarations
 #if defined(MICRO_FAMILY_ESP32C3)
-// Forward declare UARTDevice to avoid circular dependency
-// (uart.h includes board.h, so we can't include uart.h here)
-typedef const struct UARTDevice UARTDevice;
 extern UARTDevice * const DBG_UART;
 #endif

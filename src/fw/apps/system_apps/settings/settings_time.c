@@ -39,7 +39,11 @@
 #include "services/normal/timezone_database.h"
 #include "shell/prefs.h"
 
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"
+#else
 #include <time.h>
+#endif
 
 // 9 (TZ) continents: Africa, America, Antarctica, Asia, Atlantic, Australia,
 // Europe, Indian, Pacific

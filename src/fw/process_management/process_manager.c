@@ -99,6 +99,11 @@ static void prv_graceful_close_timer_callback(void* data) {
 static bool prv_force_stop_task_if_unprivileged(ProcessContext *context) {
   vTaskSuspend((TaskHandle_t) context->task_handle);
 
+#if defined(MICRO_FAMILY_ESP32C3)
+  // For ESP32-C3 (RISC-V), assume task is unprivileged and safe to kill
+  // ESP-IDF FreeRTOS doesn't have the same privilege model as ARM
+  context->safe_to_kill = true;
+#else
   uint32_t control_reg = ulTaskDebugGetStackedControl((TaskHandle_t) context->task_handle);
   if ((control_reg & 0x1) == 0) {
     // We're priviledged, it's not safe to just kill the app task.
@@ -107,6 +112,7 @@ static bool prv_force_stop_task_if_unprivileged(ProcessContext *context) {
   }
 
   context->safe_to_kill = true;
+#endif
   return true;
 }
 

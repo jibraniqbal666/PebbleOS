@@ -148,13 +148,15 @@ static void prv_structured_glance_icon_node_draw_cb(GContext *ctx, const GRect *
     grect_align(&icon_frame, rect, GAlignCenter, false /* clip */);
 
     // Save the GContext's clip box and override it so we clip the icon to the max icon size
-    const GRect saved_clip_box = ctx->draw_state.clip_box;
-    ctx->draw_state.clip_box.origin = gpoint_add(ctx->draw_state.drawing_box.origin,
-                                                 rect->origin);
-    ctx->draw_state.clip_box.size = rect->size;
+    GRect saved_clip_box = ctx->draw_state.clip_box;
+    GRect clip_box = ctx->draw_state.clip_box;
+    clip_box.origin = gpoint_add(ctx->draw_state.drawing_box.origin,
+                                 rect->origin);
+    clip_box.size = rect->size;
 
     // Prevent drawing outside of the existing clip box
-    grect_clip(&ctx->draw_state.clip_box, &saved_clip_box);
+    grect_clip(&clip_box, &saved_clip_box);
+    ctx->draw_state.clip_box = clip_box;
 
     // Draw the icon!
     launcher_app_glance_structured_draw_icon(structured_glance, ctx, icon, icon_frame.origin);

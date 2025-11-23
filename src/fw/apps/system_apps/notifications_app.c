@@ -17,7 +17,12 @@
 #include "notifications_app.h"
 
 #include <stdio.h>
+// For ESP32-C3, use PebbleOS's custom time.h instead of system time.h
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"
+#else
 #include <time.h>
+#endif
 
 #include "applib/app.h"
 #include "applib/app_exit_reason.h"

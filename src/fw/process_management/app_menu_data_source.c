@@ -343,7 +343,9 @@ static void prv_load_list_item_icon(AppMenuDataSource *source, AppMenuNode *node
 
   // Clip the icon down if needed
   static const GRect icon_clip = {{0, 0}, {32, 32}};
-  grect_clip(&node->icon->bounds, &icon_clip);
+  GRect icon_bounds = node->icon->bounds;
+  grect_clip(&icon_bounds, &icon_clip);
+  node->icon->bounds = icon_bounds;
 }
 
 static void prv_unload_list_item_icon(const AppMenuDataSource *source, AppMenuNode *node) {

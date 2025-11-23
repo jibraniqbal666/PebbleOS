@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"
+#else
 #include "time.h"
+#endif
 
 #include "syscall.h"
 
@@ -36,8 +40,13 @@
 #include "task.h"
 
 DEFINE_SYSCALL(int, sys_test, int arg) {
-  uint32_t ipsr;
+  uint32_t ipsr = 0;
+#if defined(MICRO_FAMILY_ESP32C3)
+  // RISC-V doesn't have IPSR register, use 0 as placeholder
+  // IPSR (Interrupt Program Status Register) is ARM-specific
+#else
   __asm volatile("mrs %0, ipsr" : "=r" (ipsr));
+#endif
 
   PBL_LOG(LOG_LEVEL_DEBUG, "Inside test kernel function! Privileged? %s Arg %u IPSR: %"PRIu32,
           bool_to_str(mcu_state_is_privileged()), arg, ipsr);

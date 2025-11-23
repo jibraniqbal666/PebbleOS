@@ -385,7 +385,9 @@ static void prv_debug_cmd_sleep_sessions(int index, void *context) {
     // Write start time
     struct tm local_tm;
     char temp[32];
-    localtime_r(&session->start_utc, &local_tm);
+    // Copy packed struct member to local variable to avoid unaligned pointer warning
+    time_t start_utc = session->start_utc;
+    localtime_r(&start_utc, &local_tm);
     strftime(temp, sizeof(temp), "%H:%M", &local_tm);
     safe_strcat(data->debug_card.dialog_text, temp, sizeof(data->debug_card.dialog_text));
 
@@ -456,7 +458,9 @@ static void prv_debug_cmd_step_sessions(int index, void *context) {
     // Write start time
     struct tm local_tm;
     char temp[64];
-    localtime_r(&session->start_utc, &local_tm);
+    // Copy packed struct member to local variable to avoid unaligned pointer warning
+    time_t start_utc = session->start_utc;
+    localtime_r(&start_utc, &local_tm);
     strftime(temp, sizeof(temp), "%H:%M", &local_tm);
     safe_strcat(data->debug_card.dialog_text, temp, sizeof(data->debug_card.dialog_text));
 

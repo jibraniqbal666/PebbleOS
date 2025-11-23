@@ -25,7 +25,42 @@
 #include "kernel/pbl_malloc.h"
 #include "os/tick.h"
 
+#include <stddef.h>
+
 #include "services/normal/app_outbox_service.h"
+
+// Helper macro to get address of packed struct member safely
+#if defined(MICRO_FAMILY_ESP32C3)
+// For RISC-V, use pointer arithmetic to avoid warning
+// Helper function to get address of packed struct member
+static inline void **get_packed_member_addr_impl(void *ptr, size_t offset) {
+  return (void **)((char *)ptr + offset);
+}
+// Macros for specific struct types (to avoid typeof)
+#define GET_PACKED_MEMBER_ADDR_SYS_NOTIFICATION(ptr, member) \
+  get_packed_member_addr_impl((ptr), offsetof(PebbleSysNotificationEvent, member))
+#define GET_PACKED_MEMBER_ADDR_BLOB_DB(ptr, member) \
+  get_packed_member_addr_impl((ptr), offsetof(PebbleBlobDBEvent, member))
+#define GET_PACKED_MEMBER_ADDR_BT_PAIR(ptr, member) \
+  get_packed_member_addr_impl((ptr), offsetof(PebbleBluetoothPairEvent, member))
+#define GET_PACKED_MEMBER_ADDR_LAUNCH_APP(ptr, member) \
+  get_packed_member_addr_impl((ptr), offsetof(PebbleLaunchAppEvent, member))
+#define GET_PACKED_MEMBER_ADDR_VOICE_SERVICE(ptr, member) \
+  get_packed_member_addr_impl((ptr), offsetof(PebbleVoiceServiceEvent, member))
+#define GET_PACKED_MEMBER_ADDR_REMINDER(ptr, member) \
+  get_packed_member_addr_impl((ptr), offsetof(PebbleReminderEvent, member))
+#define GET_PACKED_MEMBER_ADDR_BLE_GATT_CLIENT_SERVICE(ptr, member) \
+  get_packed_member_addr_impl((ptr), offsetof(PebbleBLEGATTClientServiceEvent, member))
+#define GET_PACKED_MEMBER_ADDR_HRM(ptr, member) \
+  get_packed_member_addr_impl((ptr), offsetof(PebbleHRMEvent, member))
+#define GET_PACKED_MEMBER_ADDR_APP_GLANCE(ptr, member) \
+  get_packed_member_addr_impl((ptr), offsetof(PebbleAppGlanceEvent, member))
+#define GET_PACKED_MEMBER_ADDR_TIMELINE_PEEK(ptr, member) \
+  get_packed_member_addr_impl((ptr), offsetof(PebbleTimelinePeekEvent, member))
+#else
+// For other platforms, direct address is fine
+#define GET_PACKED_MEMBER_ADDR(ptr, member) &((ptr)->member)
+#endif
 #include "syscall/syscall.h"
 
 #include "FreeRTOS.h"
@@ -195,8 +230,15 @@ void event_deinit(PebbleEvent* event) {
 }
 
 void event_put(PebbleEvent* event) {
+  uintptr_t saved_lr;
+#if defined(MICRO_FAMILY_ESP32C3)
+  // For RISC-V, use __builtin_return_address
+  saved_lr = (uintptr_t)__builtin_return_address(0);
+#else
+  // For ARM, read the link register directly
   register uintptr_t lr __asm("lr");
-  uintptr_t saved_lr = lr;
+  saved_lr = lr;
+#endif
   // If we are posting from the KernelMain task, use the dedicated s_from_kernel_event_queue queue for that
   // See comments above where s_from_kernel_event_queue is declared.
   if (pebble_task_get_current() == PebbleTask_KernelMain) {
@@ -207,15 +249,29 @@ void event_put(PebbleEvent* event) {
 }
 
 bool event_put_isr(PebbleEvent* event) {
+  uintptr_t saved_lr;
+#if defined(MICRO_FAMILY_ESP32C3)
+  // For RISC-V, use __builtin_return_address
+  saved_lr = (uintptr_t)__builtin_return_address(0);
+#else
+  // For ARM, read the link register directly
   register uintptr_t lr __asm("lr");
-  uintptr_t saved_lr = lr;
+  saved_lr = lr;
+#endif
 
   return prv_event_put_isr(s_kernel_event_queue, "kernel", saved_lr, event);
 }
 
 void event_put_from_process(PebbleTask task, PebbleEvent* event) {
+  uintptr_t saved_lr;
+#if defined(MICRO_FAMILY_ESP32C3)
+  // For RISC-V, use __builtin_return_address
+  saved_lr = (uintptr_t)__builtin_return_address(0);
+#else
+  // For ARM, read the link register directly
   register uintptr_t lr __asm("lr");
-  uintptr_t saved_lr = lr;
+  saved_lr = lr;
+#endif
 
   QueueHandle_t queue = event_get_to_kernel_queue(task);
   prv_event_put(queue, "from app", saved_lr, event);
@@ -280,50 +336,94 @@ void **event_get_buffer(PebbleEvent *event) {
   switch (event->type) {
     case PEBBLE_SYS_NOTIFICATION_EVENT:
       if (event->sys_notification.type == NotificationActionResult) {
-        return (void **)&event->sys_notification.action_result;
+#if defined(MICRO_FAMILY_ESP32C3)
+        return GET_PACKED_MEMBER_ADDR_SYS_NOTIFICATION(&event->sys_notification, action_result);
+#else
+        return (void **)GET_PACKED_MEMBER_ADDR(&event->sys_notification, action_result);
+#endif
       } else if ((event->sys_notification.type == NotificationAdded) ||
                  (event->sys_notification.type == NotificationRemoved) ||
                  (event->sys_notification.type == NotificationActedUpon)) {
-        return (void **)&event->sys_notification.notification_id;
+#if defined(MICRO_FAMILY_ESP32C3)
+        return GET_PACKED_MEMBER_ADDR_SYS_NOTIFICATION(&event->sys_notification, notification_id);
+#else
+        return (void **)GET_PACKED_MEMBER_ADDR(&event->sys_notification, notification_id);
+#endif
       }
       break;
 
     case PEBBLE_BLOBDB_EVENT:
-      return (void **)&event->blob_db.key;
+#if defined(MICRO_FAMILY_ESP32C3)
+      return GET_PACKED_MEMBER_ADDR_BLOB_DB(&event->blob_db, key);
+#else
+      return (void **)GET_PACKED_MEMBER_ADDR(&event->blob_db, key);
+#endif
 
     case PEBBLE_BT_PAIRING_EVENT:
       if (event->bluetooth.pair.type ==
           PebbleBluetoothPairEventTypePairingUserConfirmation) {
-        return (void **)&event->bluetooth.pair.confirmation_info;
+#if defined(MICRO_FAMILY_ESP32C3)
+        return GET_PACKED_MEMBER_ADDR_BT_PAIR(&event->bluetooth.pair, confirmation_info);
+#else
+        return (void **)GET_PACKED_MEMBER_ADDR(&event->bluetooth.pair, confirmation_info);
+#endif
       }
       break;
 
     case PEBBLE_APP_LAUNCH_EVENT:
-      return (void **)&event->launch_app.data;
+#if defined(MICRO_FAMILY_ESP32C3)
+      return GET_PACKED_MEMBER_ADDR_LAUNCH_APP(&event->launch_app, data);
+#else
+      return (void **)GET_PACKED_MEMBER_ADDR(&event->launch_app, data);
+#endif
 
     case PEBBLE_VOICE_SERVICE_EVENT:
-      return (void **)&event->voice_service.data;
+#if defined(MICRO_FAMILY_ESP32C3)
+      return GET_PACKED_MEMBER_ADDR_VOICE_SERVICE(&event->voice_service, data);
+#else
+      return (void **)GET_PACKED_MEMBER_ADDR(&event->voice_service, data);
+#endif
 
     case PEBBLE_REMINDER_EVENT:
-      return (void **)&event->reminder.reminder_id;
+#if defined(MICRO_FAMILY_ESP32C3)
+      return GET_PACKED_MEMBER_ADDR_REMINDER(&event->reminder, reminder_id);
+#else
+      return (void **)GET_PACKED_MEMBER_ADDR(&event->reminder, reminder_id);
+#endif
 
     case PEBBLE_BLE_GATT_CLIENT_EVENT:
       if (event->bluetooth.le.gatt_client.subtype == PebbleBLEGATTClientEventTypeServiceChange) {
-        return (void **)(&event->bluetooth.le.gatt_client_service.info);
+#if defined(MICRO_FAMILY_ESP32C3)
+        return GET_PACKED_MEMBER_ADDR_BLE_GATT_CLIENT_SERVICE(&event->bluetooth.le.gatt_client_service, info);
+#else
+        return (void **)GET_PACKED_MEMBER_ADDR(&event->bluetooth.le.gatt_client_service, info);
+#endif
       }
       break;
 
     case PEBBLE_HRM_EVENT:
       if (event->hrm.event_type == HRMEvent_Diagnostics) {
-        return (void **)(&event->hrm.debug);
+#if defined(MICRO_FAMILY_ESP32C3)
+        return GET_PACKED_MEMBER_ADDR_HRM(&event->hrm, debug);
+#else
+        return (void **)GET_PACKED_MEMBER_ADDR(&event->hrm, debug);
+#endif
       }
       break;
 
     case PEBBLE_APP_GLANCE_EVENT:
-      return (void **)&event->app_glance.app_uuid;
+#if defined(MICRO_FAMILY_ESP32C3)
+      return GET_PACKED_MEMBER_ADDR_APP_GLANCE(&event->app_glance, app_uuid);
+#else
+      return (void **)GET_PACKED_MEMBER_ADDR(&event->app_glance, app_uuid);
+#endif
 
     case PEBBLE_TIMELINE_PEEK_EVENT:
-      return (void **)&event->timeline_peek.item_id;
+#if defined(MICRO_FAMILY_ESP32C3)
+      return GET_PACKED_MEMBER_ADDR_TIMELINE_PEEK(&event->timeline_peek, item_id);
+#else
+      return (void **)GET_PACKED_MEMBER_ADDR(&event->timeline_peek, item_id);
+#endif
 
     default:
       break; // Nothing to do!

@@ -617,6 +617,15 @@ def _build_recovery(bld):
         excludes.append('vector_table.c')  # ESP32-C3 uses ESP-IDF's interrupt handling
         excludes.append('system/profiler.c')  # Profiler not essential for bootloader
         excludes.append('syscall/profiler_syscalls.c')  # Profiler syscalls not essential
+        excludes.append('debug/default/flash_logging.c')  # Flash logging not supported on ESP32-C3
+        excludes.append('console/prompt_commands.c')  # Console commands not required for boot (ARM-specific)
+        excludes.append('apps/watch/kickstart/kickstart.c')  # Kickstart app not required for boot (missing resources)
+        excludes.append('apps/system_apps/settings/settings_system.c')  # System settings not required for boot (missing certification resources)
+        excludes.append('shell/normal/watchface.c')  # Watchface transitions not required for boot (missing compositor function)
+        excludes.append('apps/system_apps/alarms/alarms.c')  # Alarms app not required for boot (missing resources)
+        excludes.append('apps/system_apps/alarms/alarm_detail.c')  # Alarm detail not required for boot (missing resources)
+        excludes.append('popups/alarm_popup.c')  # Alarm popup not required for boot (missing resources)
+        excludes.append('apps/system_apps/notifications_app.c')  # Notifications app not required for boot (missing resources, time.h conflict)
 
     if 'MFG_INFO_RECORDS_TEST_RESULTS' not in bld.env.DEFINES:
         excludes.extend('mfg/results_ui.c')
@@ -765,6 +774,26 @@ def _build_normal(bld):
         excludes.append('apps/system_apps/weather/**')  # Weather app not required for boot
         excludes.append('popups/notifications/notification_window.c')  # Notifications not required for boot
         excludes.append('apps/system_apps/timeline/text_node.c')  # Timeline text node not required for boot
+        excludes.append('apps/system_apps/health/**')  # Health app not required for boot
+        excludes.append('apps/system_apps/launcher/default/launcher_app_glance_settings.c')  # Launcher glance settings not required for boot
+        excludes.append('debug/default/flash_logging.c')  # Flash logging not supported on ESP32-C3
+        excludes.append('apps/core_apps/progress_ui_app.c')  # Progress UI app not required for boot
+        excludes.append('popups/timeline/timeline_item_layer.c')  # Timeline item layer not required for boot
+        excludes.append('apps/system_apps/settings/settings_vibe_patterns.c')  # Vibe patterns not required for boot
+        excludes.append('shell/normal/battery_ui.c')  # Battery UI not required for boot
+        excludes.append('console/prompt_commands.c')  # Console commands not required for boot (ARM-specific)
+        excludes.append('shell/normal/language_ui.c')  # Language UI not required for boot
+        excludes.append('apps/system_apps/settings/settings_themes.c')  # Settings themes not required for boot
+        excludes.append('apps/system_apps/settings/settings_bluetooth.c')  # Bluetooth settings not required for boot
+        excludes.append('apps/system_apps/timeline/timeline_layer.c')  # Timeline layer not required for boot
+        excludes.append('kernel/fault_handling.c')  # ARM-specific fault handling not required for boot
+        excludes.append('apps/watch/kickstart/kickstart.c')  # Kickstart app not required for boot (missing resources)
+        excludes.append('apps/system_apps/settings/settings_system.c')  # System settings not required for boot (missing certification resources)
+        excludes.append('shell/normal/watchface.c')  # Watchface transitions not required for boot (missing compositor function)
+        excludes.append('apps/system_apps/alarms/alarms.c')  # Alarms app not required for boot (missing resources)
+        excludes.append('apps/system_apps/alarms/alarm_detail.c')  # Alarm detail not required for boot (missing resources)
+        excludes.append('popups/alarm_popup.c')  # Alarm popup not required for boot (missing resources)
+        excludes.append('apps/system_apps/notifications_app.c')  # Notifications app not required for boot (missing resources, time.h conflict)
 
     if not bld.capability('HAS_BUILTIN_HRM'):
         excludes.append('popups/ble_hrm/**')
@@ -816,7 +845,9 @@ def _build_normal(bld):
 
     sources.append(bld.path.get_bld().make_node('pebble.auto.c'))
     sources.append(bld.path.get_bld().make_node('resource/pfs_resource_table.auto.c'))
-    sources.append(bld.path.get_bld().make_node('resource/timeline_resource_table.auto.c'))
+    # Timeline resource table not needed for ESP32-C3 (timeline features excluded)
+    if not bld.is_esp32c3():
+        sources.append(bld.path.get_bld().make_node('resource/timeline_resource_table.auto.c'))
     sources.append(bld.path.get_bld().make_node('builtin_resources.auto.c'))
 
     if bld.env.DISABLE_PROMPT:

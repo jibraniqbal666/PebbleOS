@@ -91,6 +91,22 @@ void syscall_assert_userspace_buffer(const void* buf, size_t num_bytes) {
 
 // Drop privileges and return to the address stored in thread local storage
 // Has to preserve r0 and r1 so the syscall's return value is passed through
+#if defined(MICRO_FAMILY_ESP32C3)
+// For ESP32-C3 (RISC-V), syscalls don't use ARM-specific privilege mechanisms
+// Provide stub implementations
+EXTERNALLY_VISIBLE void NAKED_FUNC USED prv_drop_privilege(void) {
+  process_manager_handle_syscall_exit();
+  mcu_state_set_thread_privilege(false);
+}
+
+EXTERNALLY_VISIBLE void NAKED_FUNC USED prv_drop_privilege_wrapper(void) {
+  prv_drop_privilege();
+}
+
+void NAKED_FUNC USED syscall_internal_maybe_skip_privilege(void) {
+  // For ESP32-C3, syscalls are regular function calls, no privilege skipping needed
+}
+#else
 EXTERNALLY_VISIBLE void NAKED_FUNC USED prv_drop_privilege(void) {
   __asm volatile (
     " push {r0, r1} \n"
@@ -157,6 +173,7 @@ void NAKED_FUNC USED syscall_internal_maybe_skip_privilege(void) {
     " pop {pc} \n" // Return to the wrapper
   );
 }
+#endif
 
 // This is more space efficient than inlining the equality
 // expression into every syscall since the address literal

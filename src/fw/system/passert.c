@@ -142,8 +142,15 @@ void passert_check_not_task(PebbleTask unexpected_task) {
 //! Assert function called by the STM peripheral library's
 //! 'assert_param' method. See stm32f2xx_conf.h for more information.
 void assert_failed(uint8_t* file, uint32_t line) {
+  uintptr_t saved_lr;
+#if defined(MICRO_FAMILY_ESP32C3)
+  // For RISC-V, use __builtin_return_address
+  saved_lr = (uintptr_t)__builtin_return_address(0);
+#else
+  // For ARM, read the link register directly
   register uintptr_t lr __asm("lr");
-  uintptr_t saved_lr = lr;
+  saved_lr = lr;
+#endif
 
   handle_passert_failed((const char*) file, line, saved_lr, "STM32", "STM32 peripheral library tripped an assert");
 }
