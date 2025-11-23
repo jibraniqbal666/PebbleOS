@@ -252,6 +252,7 @@ elif bld.is_esp32c3():
             'driver_uart',
             'driver_flash',
             'driver_gpio_defaults',  # Needed by some drivers
+            'driver_rtc',  # RTC driver for time management
         ],
     )
 ## ----------
@@ -1683,6 +1684,18 @@ elif mcu_family == 'SF32LB52':
             'fw_includes',
             'root_includes',
             'hal_sifli',
+        ],
+    )
+elif mcu_family == 'ESP32C3':
+    bld.objects(
+        name='driver_rtc',
+        source=[
+            'esp32c3/rtc.c',
+        ],
+        use=[
+            'freertos',
+            'fw_includes',
+            'root_includes',
         ],
     )
 

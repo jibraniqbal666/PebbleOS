@@ -20,7 +20,11 @@
 #include "applib/data_logging.h"
 
 #include <stdint.h>
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"
+#else
 #include <time.h>
+#endif
 
 DataLoggingSession *dls_list_find_by_session_id(uint8_t session_id);
 

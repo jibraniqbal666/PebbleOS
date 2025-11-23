@@ -16,6 +16,7 @@
 
 #include "services/common/regular_timer.h"
 
+#include "drivers/rtc.h"
 #include "os/mutex.h"
 #include "services/common/new_timer/new_timer.h"
 #include "system/logging.h"
@@ -105,8 +106,8 @@ static void timer_callback(void* data) {
     const time_t now_ts = rtc_get_ticks() / configTICK_RATE_HZ;
     if ((now_ts - s_last_minute_fire_ts) > MISSING_MINUTE_CB_LOG_THRESHOLD_S) {
       PBL_LOG(LOG_LEVEL_WARNING,
-              "Skipped a regular_timer_minute callback. Previous ts: %lu, Now ts: %lu",
-              s_last_minute_fire_ts, now_ts);
+              "Skipped a regular_timer_minute callback. Previous ts: %llu, Now ts: %llu",
+              (unsigned long long)s_last_minute_fire_ts, (unsigned long long)now_ts);
     }
     s_last_minute_fire_ts = now_ts;
 

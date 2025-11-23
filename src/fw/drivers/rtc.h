@@ -23,7 +23,12 @@
 
 typedef uint64_t RtcTicks;
 
-#if !defined(MICRO_FAMILY_SF32LB52)
+#if defined(MICRO_FAMILY_ESP32C3)
+// ESP32-C3 uses FreeRTOS tick rate (100 Hz) for RTC ticks
+// Use default ESP32-C3 FreeRTOS tick rate to avoid circular dependency
+// The actual configTICK_RATE_HZ will be available when FreeRTOS.h is included in implementation files
+#define RTC_TICKS_HZ (100u)  // ESP32-C3 default FreeRTOS tick rate
+#elif !defined(MICRO_FAMILY_SF32LB52)
 #define RTC_TICKS_HZ (1024u)
 #else
 // SF32lb52 lptim using RC10K.

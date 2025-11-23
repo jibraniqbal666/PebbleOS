@@ -134,8 +134,13 @@ void system_task_watchdog_feed(void) {
 }
 
 static void handle_system_task_send_failure(SystemTaskEventCallback cb) {
+#if defined(MICRO_FAMILY_ESP32C3)
+  // RISC-V uses 'ra' (x1) as the return address register, not 'lr'
+  register uintptr_t saved_lr __asm("ra");
+#else
   register uintptr_t lr __asm("lr");
   uintptr_t saved_lr = lr;
+#endif
 
   PBL_LOG(LOG_LEVEL_ERROR, "System task queue full. Dropped cb: %p, current cb: %p", cb, s_current_cb);
 

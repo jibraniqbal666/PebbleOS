@@ -26,7 +26,11 @@
 #include "util/size.h"
 
 #include <inttypes.h>
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"
+#else
 #include <time.h>
+#endif
 
 #define LINK_CONTROL_VERSION              1
 #define TIMEOUT_MS                        100

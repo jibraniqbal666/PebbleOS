@@ -39,9 +39,9 @@
   MACRO(SYSTEM_RESOURCES_BANK_0,  0x080000 /*  512K */, arg) /* 0x108000 - 0x188000 */ \
   MACRO(SYSTEM_RESOURCES_BANK_1,  0x080000 /*  512K */, arg) /* 0x188000 - 0x208000 */ \
   MACRO(SAFE_FIRMWARE,            0x080000 /*  512k */, arg) /* 0x208000 - 0x288000 */ \
-  MACRO(DEBUG_DB,                 0x020000 /*  128k */, arg) /* 0x288000 - 0x2A8000 */ \
-  MACRO(FILESYSTEM,               0x350000 /* 3392k */, arg) /* 0x2A8000 - 0x5F8000 */ \
-  MACRO(RSVD,                     0x00E000 /*   56k */, arg) /* 0x5F8000 - 0x606000 */ \
+  MACRO(DEBUG_DB,                 0x028000 /*  160k */, arg) /* 0x288000 - 0x2B0000 (sector-aligned) */ \
+  MACRO(FILESYSTEM,               0x140000 /* 1280k */, arg) /* 0x2B0000 - 0x3F0000 (sector-aligned start and end) */ \
+  MACRO(RSVD,                     0x00E000 /*   56k */, arg) /* 0x3F0000 - 0x3FE000 */ \
   MACRO(SHARED_PRF_STORAGE,       0x001000 /*    4k */, arg) /* 0x606000 - 0x607000 */ \
   MACRO(MFG_INFO,                 0x001000 /*    4k */, arg) /* 0x607000 - 0x608000 */
 

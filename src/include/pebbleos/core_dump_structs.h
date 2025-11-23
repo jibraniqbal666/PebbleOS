@@ -26,7 +26,7 @@
 
 #include "util/attributes.h"
 #if defined(MICRO_FAMILY_ESP32C3)
-#include "fw/kernel/portmacro_esp32c3.h"
+#include "kernel/portmacro_esp32c3.h"
 #else
 #include "portmacro.h"
 #endif

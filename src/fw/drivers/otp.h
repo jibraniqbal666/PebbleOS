@@ -62,6 +62,15 @@ enum {
   OTP_PCBA_SERIAL = 2,
   NUM_OTP_SLOTS = 3,
 };
+#elif PLATFORM_ESP32C3
+// ESP32-C3 doesn't have OTP memory in the same way as other platforms
+// Define minimal slots for compatibility
+enum {
+  OTP_HWVER = 0,
+  OTP_SERIAL = 1,
+  OTP_PCBA_SERIAL = 2,
+  NUM_OTP_SLOTS = 3,
+};
 #else
 #error "OTP Slots not set for platform"
 #endif

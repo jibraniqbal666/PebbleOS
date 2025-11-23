@@ -320,8 +320,8 @@ static void prv_assign_alarm(Alarm *alarm, CronJob *cron) {
   s_next_alarm_cron.cb_data = (void*)(intptr_t)alarm->id;
   s_next_alarm = *alarm;
   s_next_alarm_time = cron_job_schedule(&s_next_alarm_cron);
-  PBL_LOG(LOG_LEVEL_INFO, "Scheduling alarm %u to go off at %d:%d (%ld) (smart:%d)",
-          alarm->id, alarm->config.hour, alarm->config.minute, s_next_alarm_time,
+  PBL_LOG(LOG_LEVEL_INFO, "Scheduling alarm %u to go off at %d:%d (%lld) (smart:%d)",
+          alarm->id, alarm->config.hour, alarm->config.minute, (long long)s_next_alarm_time,
           alarm->config.is_smart);
 }
 

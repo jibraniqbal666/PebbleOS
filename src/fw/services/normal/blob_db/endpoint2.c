@@ -110,7 +110,9 @@ static void prv_handle_start_sync(CommSession *session,
   };
 
   BlobDBId db_id;
-  endpoint_private_read_token_db_id(data, &response.token, &db_id);
+  BlobDBToken token;  // Copy packed member to local variable to avoid taking address of packed member
+  endpoint_private_read_token_db_id(data, &token, &db_id);
+  response.token = token;  // Copy back to packed struct
 
   status_t rv = blob_db_sync_db(db_id);
   switch (rv) {

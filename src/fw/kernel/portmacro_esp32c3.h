@@ -27,6 +27,8 @@
 #include "asm_compat.h"
 
 #include "freertos/portmacro.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 // ESP-IDF FreeRTOS doesn't have portIN_CRITICAL(), which is a PebbleOS extension
 // Provide a stub implementation for ESP32-C3
@@ -48,5 +50,14 @@ static inline bool vPortInCritical(void) {
 #ifndef portCANONICAL_REG_COUNT
 #define portCANONICAL_REG_COUNT 16
 #endif
+
+// ESP-IDF's FreeRTOS requires a mutex parameter for portENTER_CRITICAL/portEXIT_CRITICAL
+// Override taskENTER_CRITICAL and taskEXIT_CRITICAL to provide parameterless versions
+// For single-core ESP32-C3, we can pass NULL as the mutex
+// These macros are defined in task.h, so we need to include task.h first, then override
+#undef taskENTER_CRITICAL
+#undef taskEXIT_CRITICAL
+#define taskENTER_CRITICAL() portENTER_CRITICAL(NULL)
+#define taskEXIT_CRITICAL() portEXIT_CRITICAL(NULL)
 #endif
 

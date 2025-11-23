@@ -16,7 +16,11 @@
 
 #pragma once
 
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"
+#else
 #include <time.h>
+#endif
 
 #include "util/list.h"
 

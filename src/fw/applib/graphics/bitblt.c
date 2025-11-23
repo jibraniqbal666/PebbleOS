@@ -147,7 +147,9 @@ void bitblt_bitmap_into_bitmap_tiled_1bit_to_1bit(GBitmap* dest_bitmap,
 void bitblt_bitmap_into_bitmap(GBitmap* dest_bitmap, const GBitmap* src_bitmap,
                                GPoint dest_offset, GCompOp compositing_mode, GColor8 tint_color) {
   GRect dest_rect = { dest_offset, src_bitmap->bounds.size };
-  grect_clip(&dest_rect, &dest_bitmap->bounds);
+  // Copy packed member to local variable to avoid taking address of packed member
+  GRect dest_bounds = dest_bitmap->bounds;
+  grect_clip(&dest_rect, &dest_bounds);
 
   GBitmap src_clipped_bitmap = *src_bitmap;
   src_clipped_bitmap.bounds.origin = (GPoint) {
