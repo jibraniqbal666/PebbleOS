@@ -24,6 +24,8 @@
 #include "syscall/syscall.h"
 #include "util/net.h"
 
+#include <stddef.h>  // For offsetof
+
 bool gdraw_command_resource_is_valid(ResAppNum app_num, uint32_t resource_id,
                                      uint32_t expected_signature, uint32_t *data_size) {
   // Load file signature, and check that it matches the expected_signature
@@ -63,9 +65,11 @@ static void prv_draw_path(GContext *ctx, GDrawCommand *command) {
   if (command->num_points <= 1) {
     return;
   }
+  // Use pointer arithmetic to avoid taking address of packed flexible array member
+  GPoint *points_ptr = (GPoint *)((char *)command + offsetof(GDrawCommand, points));
   GPath path = {
     .num_points = command->num_points,
-    .points = command->points
+    .points = points_ptr
   };
   // draw all values of alpha, except fully transparent
   if ((command->fill_color.a != 0)) {

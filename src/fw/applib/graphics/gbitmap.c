@@ -118,6 +118,8 @@ GBitmapDataRowInfo prv_gbitmap_get_data_row_info(const GBitmap *bitmap, uint16_t
         .max_x = info->max_x,
     };
   } else {
+    // Copy packed struct member to local variable to avoid taking address warning
+    GRect bounds = bitmap->bounds;
     return (GBitmapDataRowInfo) {
         .data = (uint8_t*)bitmap->addr + y * bitmap->row_size_bytes,
         .min_x = 0,
@@ -125,7 +127,7 @@ GBitmapDataRowInfo prv_gbitmap_get_data_row_info(const GBitmap *bitmap, uint16_t
         // (.row_size_bytes / .bytes_per_pixel) - 1
         // it's still a valid value as we assume grect_get_max_x(.bounds) < .row_size_bytes * bpp
         // that way this is an efficient implementation of this functions contract
-        .max_x = grect_get_max_x(&bitmap->bounds) - 1,
+        .max_x = grect_get_max_x(&bounds) - 1,
     };
   }
 }
@@ -193,7 +195,9 @@ void gbitmap_init_as_sub_bitmap(GBitmap *sub_bitmap, const GBitmap *base_bitmap,
     sub_bitmap->info.is_palette_heap_allocated = false;
     sub_bitmap->info.is_bitmap_heap_allocated = false;
   }
-  grect_clip(&sub_rect, &base_bitmap->bounds);
+  // Copy packed struct member to local variable to avoid taking address warning
+  GRect base_bounds = base_bitmap->bounds;
+  grect_clip(&sub_rect, &base_bounds);
   sub_bitmap->bounds = sub_rect;
 }
 

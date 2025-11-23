@@ -257,8 +257,11 @@ static inline void prv_menu_layer_draw_row(MenuLayer *menu_layer, Layer *cell_la
 
   // Use the drawing_box as a clipper to force the content to only use
   // the space available to it and remove overflow
-  const GRect *const rect_clipper = (const GRect *const)&ctx->draw_state.drawing_box;
-  grect_clip((GRect *const)&ctx->draw_state.clip_box, rect_clipper);
+  // Copy packed struct members to local variables to avoid taking address warnings
+  GRect drawing_box = ctx->draw_state.drawing_box;
+  GRect clip_box = ctx->draw_state.clip_box;
+  grect_clip(&clip_box, &drawing_box);
+  ctx->draw_state.clip_box = clip_box;
 
   const bool fully_covered = grect_equal(&cell_layer->frame, &menu_layer->inverter.layer.frame);
   const bool partial = grect_overlaps_grect(&cell_layer->frame, &menu_layer->inverter.layer.frame);
@@ -272,7 +275,10 @@ static inline void prv_menu_layer_draw_row(MenuLayer *menu_layer, Layer *cell_la
     // Set clipper to the inverter layer in clipping box coordinates
     GRect selection_clipper;
     layer_get_global_frame(&menu_layer->inverter.layer, &selection_clipper);
-    grect_clip((GRect *const)&ctx->draw_state.clip_box, &selection_clipper);
+    // Copy packed struct member to local variable to avoid taking address warning
+    GRect clip_box = ctx->draw_state.clip_box;
+    grect_clip(&clip_box, &selection_clipper);
+    ctx->draw_state.clip_box = clip_box;
 
     // Render with highlight
     prv_prepare_and_draw_row(ctx, menu_layer, cell_layer, cursor, true);
@@ -297,8 +303,11 @@ static inline void prv_menu_layer_draw_section_header(MenuLayer *menu_layer, Lay
   ctx->draw_state.drawing_box.origin.y += cursor->y;
   ctx->draw_state.drawing_box.size.h = cursor->h;
 
-  const GRect *const rect_clipper = (const GRect *const)&ctx->draw_state.drawing_box;
-  grect_clip((GRect *const)&ctx->draw_state.clip_box, rect_clipper);
+  // Copy packed struct members to local variables to avoid taking address warnings
+  GRect drawing_box = ctx->draw_state.drawing_box;
+  GRect clip_box = ctx->draw_state.clip_box;
+  grect_clip(&clip_box, &drawing_box);
+  ctx->draw_state.clip_box = clip_box;
 
   prv_prepare_row(ctx, menu_layer, cell_layer, false);
 

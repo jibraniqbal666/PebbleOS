@@ -688,12 +688,14 @@ T_STATIC NOINLINE MOCKABLE void prv_debug_perimeter(GContext *ctx, const GRangeH
     const Fixed_S16_3 fixed_x2 = (Fixed_S16_3) {
       .integer = h_range->origin_x + h_range->size_w,
     };
+    // Copy packed struct member to local variable to avoid taking address warnings
+    GRect dest_bounds = ctx->dest_bitmap.bounds;
     graphics_private_draw_horizontal_line_prepared(ctx, &ctx->dest_bitmap,
-                                                   &ctx->dest_bitmap.bounds,
+                                                   &dest_bounds,
                                                    line->origin.y + TEXT_LINE_CAP_LINE(line),
                                                    fixed_x1, fixed_x2, GColorRed);
     graphics_private_draw_horizontal_line_prepared(ctx, &ctx->dest_bitmap,
-                                                   &ctx->dest_bitmap.bounds,
+                                                   &dest_bounds,
                                                    line->origin.y + TEXT_LINE_BASE_LINE(line),
                                                    fixed_x1, fixed_x2, GColorRed);
 #endif
@@ -1160,7 +1162,9 @@ void graphics_draw_text(GContext* ctx, const char* text, GFont const font,
   GRect global_box = grect_to_global_coordinates(box, ctx);
 
   GRect temp_box = global_box;
-  grect_clip(&temp_box, &ctx->draw_state.clip_box);
+  // Copy packed struct member to local variable to avoid taking address warning
+  GRect clip_box = ctx->draw_state.clip_box;
+  grect_clip(&temp_box, &clip_box);
   if (temp_box.size.h <= 0) {
     // the text is not ever going to make it on screen. Bail early.
     return;

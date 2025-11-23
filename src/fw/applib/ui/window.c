@@ -81,12 +81,20 @@ static void prv_adjust_drawing_state_for_legacy2_apps(DrawingStateOrigins *saved
     // for 2.x apps, we cannot animate the window frame during a transition but need to use this
     // externalized state
     const GPoint displacement = stack->transition_context.window_to_displacement;
-    gpoint_add_eq(&draw_state->drawing_box.origin, displacement);
-    gpoint_add_eq(&draw_state->clip_box.origin, displacement);
+    // Copy packed struct members to local variables to avoid taking address warnings
+    GPoint drawing_box_origin = draw_state->drawing_box.origin;
+    GPoint clip_box_origin = draw_state->clip_box.origin;
+    gpoint_add_eq(&drawing_box_origin, displacement);
+    gpoint_add_eq(&clip_box_origin, displacement);
+    draw_state->drawing_box.origin = drawing_box_origin;
+    draw_state->clip_box.origin = clip_box_origin;
   }
 
   // clip_box must respect screen boundaries
-  grect_clip(&draw_state->clip_box, &saved_state->clip_box);
+  // Copy packed struct member to local variable to avoid taking address warning
+  GRect clip_box = draw_state->clip_box;
+  grect_clip(&clip_box, &saved_state->clip_box);
+  draw_state->clip_box = clip_box;
 }
 
 static void prv_restore_drawing_state(DrawingStateOrigins *saved_state, GContext *ctx) {
@@ -99,7 +107,10 @@ void prv_render_legacy2_system_status_bar(GContext *ctx, Window *window) {
     // adjust clipping rectangle so that rendering doesn't happen outside of the window
     // this prevents instant colors changes when going from one window to another
     GRect saved_clip_box = ctx->draw_state.clip_box;
-    grect_clip(&ctx->draw_state.clip_box, &window->layer.frame);
+    // Copy packed struct member to local variable to avoid taking address warning
+    GRect clip_box = ctx->draw_state.clip_box;
+    grect_clip(&clip_box, &window->layer.frame);
+    ctx->draw_state.clip_box = clip_box;
 
     StatusBarLayerConfig config = {
         .foreground_color = GColorWhite,

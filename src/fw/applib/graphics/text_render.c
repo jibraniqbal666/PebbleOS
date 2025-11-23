@@ -24,6 +24,8 @@
 #include "util/bitset.h"
 #include "util/math.h"
 
+#include <stddef.h>  // For offsetof
+
 #if !defined(__clang__)
 #pragma GCC optimize ("O2")
 #endif
@@ -95,7 +97,9 @@ void render_glyph(GContext* const ctx, const uint32_t codepoint, FontInfo* const
   // Now clip that box against the screen/other UI elements. This rect will be the rect that we
   // actually fill with bits on the screen.
   GRect clipped_glyph_target = glyph_target;
-  grect_clip(&clipped_glyph_target, &ctx->draw_state.clip_box);
+  // Copy packed struct member to local variable to avoid taking address warning
+  GRect clip_box = ctx->draw_state.clip_box;
+  grect_clip(&clipped_glyph_target, &clip_box);
 
   // The number of bits to be clipped off the edges
   const int left_clip = clipped_glyph_target.origin.x - glyph_target.origin.x;
@@ -142,7 +146,8 @@ void render_glyph(GContext* const ctx, const uint32_t codepoint, FontInfo* const
   uint8_t dest_shift = dest_shift_at_line_begin;
 
   // The glyph bitmap starts the block after the metrics data:
-  uint32_t const* glyph_block = glyph->data;
+  // Use pointer arithmetic to avoid taking address of packed flexible array member
+  uint32_t const* glyph_block = (uint32_t const*)((char const*)glyph + offsetof(GlyphData, data));
 
   // Set up the first piece of source glyph bitmap:
   int8_t glyph_block_bits_left = 32;

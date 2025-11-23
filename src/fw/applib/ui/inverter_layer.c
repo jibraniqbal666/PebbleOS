@@ -27,7 +27,9 @@ inline static void prv_inverter_layer_update_proc_color(GContext *ctx) {
   // called through layer_render_tree(),
   GRect rect = ctx->draw_state.drawing_box;
   // invert bytes in rect
-  grect_clip(&rect, &ctx->dest_bitmap.bounds);  // clip to display bounds
+  // Copy packed struct member to local variable to avoid taking address warning
+  GRect dest_bounds = ctx->dest_bitmap.bounds;
+  grect_clip(&rect, &dest_bounds);  // clip to display bounds
   for (int16_t y = rect.origin.y; y < rect.origin.y + rect.size.h; y++) {
     int16_t row_offset = y * ctx->dest_bitmap.row_size_bytes;
     for (int16_t x = rect.origin.x; x < rect.origin.x + rect.size.w; x++) {

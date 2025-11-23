@@ -32,7 +32,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"  // Use PebbleOS's custom time.h for ESP32-C3
+#else
 #include <time.h>
+#endif
 
 #define MAX_FILTER_NAME_LENGTH 16
 

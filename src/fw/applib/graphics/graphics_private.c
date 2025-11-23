@@ -47,7 +47,9 @@ T_STATIC inline void set_pixel_raw_8bit(GContext* ctx, GPoint point) {
 
 #if PBL_BW
 static inline void set_pixel_raw_2bit(GContext* ctx, GPoint point) {
-  if (!grect_contains_point(&ctx->dest_bitmap.bounds, &point)) {
+  // Copy packed struct member to local variable to avoid taking address warning
+  GRect dest_bounds = ctx->dest_bitmap.bounds;
+  if (!grect_contains_point(&dest_bounds, &point)) {
     return;
   }
   bool black = (gcolor_equal(ctx->draw_state.stroke_color, GColorBlack));
@@ -58,7 +60,9 @@ static inline void set_pixel_raw_2bit(GContext* ctx, GPoint point) {
 #endif
 
 void graphics_private_set_pixel(GContext* ctx, GPoint point) {
-  if (!grect_contains_point(&ctx->draw_state.clip_box, &point)) {
+  // Copy packed struct member to local variable to avoid taking address warning
+  GRect clip_box = ctx->draw_state.clip_box;
+  if (!grect_contains_point(&clip_box, &point)) {
     return;
   }
 
@@ -96,10 +100,12 @@ void prv_assign_line_horizontal_non_aa(GContext* ctx, int16_t y, int16_t x1, int
   x2 += ctx->draw_state.drawing_box.origin.x;
 
   // Clip results
-  const int y_min = ctx->draw_state.clip_box.origin.y;
-  const int y_max = grect_get_max_y(&ctx->draw_state.clip_box) - 1;
-  const int x_min = ctx->draw_state.clip_box.origin.x;
-  const int x_max = grect_get_max_x(&ctx->draw_state.clip_box) - 1;
+  // Copy packed struct member to local variable to avoid taking address warnings
+  GRect clip_box = ctx->draw_state.clip_box;
+  const int y_min = clip_box.origin.y;
+  const int y_max = grect_get_max_y(&clip_box) - 1;
+  const int x_min = clip_box.origin.x;
+  const int x_max = grect_get_max_x(&clip_box) - 1;
 
   x1 = MAX(x1, x_min);
   x2 = MIN(x2, x_max);
@@ -131,10 +137,12 @@ void prv_assign_line_vertical_non_aa(GContext* ctx, int16_t x, int16_t y1, int16
   y2++;
 
   // Clip results
-  const int y_min = ctx->draw_state.clip_box.origin.y;
-  const int y_max = grect_get_max_y(&ctx->draw_state.clip_box) - 1;
-  const int x_min = ctx->draw_state.clip_box.origin.x;
-  const int x_max = grect_get_max_x(&ctx->draw_state.clip_box) - 1;
+  // Copy packed struct member to local variable to avoid taking address warnings
+  GRect clip_box = ctx->draw_state.clip_box;
+  const int y_min = clip_box.origin.y;
+  const int y_max = grect_get_max_y(&clip_box) - 1;
+  const int x_min = clip_box.origin.x;
+  const int x_max = grect_get_max_x(&clip_box) - 1;
 
   y1 = MAX(y1, y_min);
   y2 = MIN(y2, y_max + 1); // Thats because we added one to end of the line
@@ -600,12 +608,14 @@ void graphics_private_move_pixels_horizontally(GBitmap *bitmap, int16_t delta_x,
 
   const int16_t abs_delta = ABS(delta_x);
   const bool delta_neg = (delta_x < 0);
-  const int16_t min_y = bitmap->bounds.origin.y;
-  const int16_t max_y = grect_get_max_y(&bitmap->bounds) - 1;
+  // Copy packed struct member to local variable to avoid taking address warnings
+  GRect bitmap_bounds = bitmap->bounds;
+  const int16_t min_y = bitmap_bounds.origin.y;
+  const int16_t max_y = grect_get_max_y(&bitmap_bounds) - 1;
   for (int16_t y = min_y; y <= max_y; y++) {
     const GBitmapDataRowInfo row_info = gbitmap_get_data_row_info(bitmap, y);
-    const int16_t min_x = MAX(row_info.min_x, bitmap->bounds.origin.x);
-    const int16_t max_x = MIN(row_info.max_x, grect_get_max_x(&bitmap->bounds) - 1);
+    const int16_t min_x = MAX(row_info.min_x, bitmap_bounds.origin.x);
+    const int16_t max_x = MIN(row_info.max_x, grect_get_max_x(&bitmap_bounds) - 1);
     const int16_t num_pix_data_row = max_x - min_x + 1;
     const int16_t pixels_to_move = num_pix_data_row - abs_delta;
     switch (bpp) {
@@ -718,9 +728,11 @@ void graphics_private_move_pixels_vertically(GBitmap *bitmap, int16_t delta_y) {
 
   const bool delta_neg = (delta_y < 0);
   const int16_t abs_delta = ABS(delta_y);
-  const int16_t min_y = bitmap->bounds.origin.y;
-  const int16_t max_y = grect_get_max_y(&bitmap->bounds) - 1;
-  const int16_t max_x = grect_get_max_x(&bitmap->bounds) - 1;
+  // Copy packed struct member to local variable to avoid taking address warnings
+  GRect bitmap_bounds = bitmap->bounds;
+  const int16_t min_y = bitmap_bounds.origin.y;
+  const int16_t max_y = grect_get_max_y(&bitmap_bounds) - 1;
+  const int16_t max_x = grect_get_max_x(&bitmap_bounds) - 1;
   const int16_t iterate_dir = delta_neg ? -1 : 1;
   const int16_t end_y = delta_neg ? max_y : min_y;
 
@@ -773,10 +785,12 @@ GColor graphics_private_sample_line_color(const GBitmap *bitmap, GColorSampleEdg
 
   const int bpp = gbitmap_get_bits_per_pixel(bitmap->info.format);
 
-  const int16_t min_x = bitmap->bounds.origin.x;
-  const int16_t min_y = bitmap->bounds.origin.y;
-  const int16_t end_x = grect_get_max_x(&bitmap->bounds);
-  const int16_t end_y = grect_get_max_y(&bitmap->bounds);
+  // Copy packed struct member to local variable to avoid taking address warnings
+  GRect bitmap_bounds = bitmap->bounds;
+  const int16_t min_x = bitmap_bounds.origin.x;
+  const int16_t min_y = bitmap_bounds.origin.y;
+  const int16_t end_x = grect_get_max_x(&bitmap_bounds);
+  const int16_t end_y = grect_get_max_y(&bitmap_bounds);
 
   const bool horiz_advance = (edge == GColorSampleEdgeUp) || (edge == GColorSampleEdgeDown);
   const bool edge_is_max_position = (edge == GColorSampleEdgeDown) ||

@@ -91,8 +91,10 @@ void bitblt_bitmap_into_bitmap_tiled_palette_to_1bit(GBitmap* dest_bitmap,
   const int16_t src_begin_y = src_bitmap->bounds.origin.y;
   // The bounds size is relative to the bounds origin, but the offset is within the origin. This
   // means that the end coordinates may need to be adjusted.
-  const int16_t src_end_x = grect_get_max_x(&src_bitmap->bounds);
-  const int16_t src_end_y = grect_get_max_y(&src_bitmap->bounds);
+  // Copy packed struct member to local variable to avoid taking address warning
+  GRect src_bounds = src_bitmap->bounds;
+  const int16_t src_end_x = grect_get_max_x(&src_bounds);
+  const int16_t src_end_y = grect_get_max_y(&src_bounds);
 
   // how many 32-bit blocks do we need to bitblt on this row:
   const int16_t dest_end_x = grect_get_max_x(&dest_rect);

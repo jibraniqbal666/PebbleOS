@@ -33,7 +33,11 @@
 #include <string.h>
 #include <limits.h>
 #include <ctype.h>
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"  // Use PebbleOS's custom time.h for ESP32-C3
+#else
 #include "time.h"
+#endif
 #include "local.h"
 #include "timelocal.h"
 #include "applib/i18n.h"

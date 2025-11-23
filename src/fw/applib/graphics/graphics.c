@@ -74,8 +74,11 @@ T_STATIC void prv_fill_rect_legacy2(GContext *ctx, GRect rect, uint16_t radius,
   // clip it to avoid drawing outside of the bitmap memory:
   GRect clipped_rect = rect;
   grect_standardize(&clipped_rect);
-  grect_clip(&clipped_rect, &bitmap->bounds);
-  grect_clip(&clipped_rect, &ctx->draw_state.clip_box);
+  // Copy packed struct members to local variables to avoid taking address warnings
+  GRect bitmap_bounds = bitmap->bounds;
+  GRect clip_box = ctx->draw_state.clip_box;
+  grect_clip(&clipped_rect, &bitmap_bounds);
+  grect_clip(&clipped_rect, &clip_box);
   if (grect_is_empty(&clipped_rect)) {
     return;
   }

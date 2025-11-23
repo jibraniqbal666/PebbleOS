@@ -74,7 +74,9 @@ static void prv_handle_event_service_event(PebbleEvent *e, void *context) {
 
   // Call the handler provided by the client
   PluginServiceEntry *entry = (PluginServiceEntry *)found;
-  entry->handler(e->plugin_service.type, &e->plugin_service.data);
+  // Copy packed struct member to local variable to avoid taking address warning
+  PluginEventData data = e->plugin_service.data;
+  entry->handler(e->plugin_service.type, &data);
 }
 
 

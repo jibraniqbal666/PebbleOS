@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"  // Use PebbleOS's custom time.h for ESP32-C3
+#else
 #include <time.h>
+#endif
 
 #define EPOCH_YEAR      1970
 #define EPOCH_WDAY      4

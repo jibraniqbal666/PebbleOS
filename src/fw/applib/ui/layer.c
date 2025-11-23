@@ -191,6 +191,8 @@ void layer_render_tree(Layer *node, GContext *ctx) {
     // prepare draw_state for the current layer
     // it will not be stored and restored but recalculated from the root
     // for every layer
+    // Copy packed struct member to local variable to avoid taking address warnings
+    GRect clip_box = ctx->draw_state.clip_box;
     for (unsigned int level = 0; level <= current_depth; level++) {
       const Layer *levels_layer = stack[level];
       if (levels_layer->clips) {
@@ -202,7 +204,7 @@ void layer_render_tree(Layer *node, GContext *ctx) {
             },
             .size = levels_layer->frame.size,
         };
-        grect_clip(&ctx->draw_state.clip_box, &levels_layer_frame_in_ctx_space);
+        grect_clip(&clip_box, &levels_layer_frame_in_ctx_space);
       }
 
       // translate the drawing_box to the bounds of the layer:
@@ -212,8 +214,10 @@ void layer_render_tree(Layer *node, GContext *ctx) {
           levels_layer->frame.origin.y + levels_layer->bounds.origin.y;
       ctx->draw_state.drawing_box.size = levels_layer->bounds.size;
     }
+    // Copy the modified clip_box back to ctx->draw_state.clip_box
+    ctx->draw_state.clip_box = clip_box;
 
-    if (!grect_is_empty(&ctx->draw_state.clip_box)) {
+    if (!grect_is_empty(&clip_box)) {
       // call the current node's render procedure
       if (node->update_proc) {
         node->update_proc(node, ctx);

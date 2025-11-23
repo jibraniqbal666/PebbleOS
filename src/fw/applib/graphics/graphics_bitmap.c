@@ -62,8 +62,11 @@ void graphics_draw_bitmap_in_rect_processed(GContext *ctx, const GBitmap *src_bi
 
   // Clip the rect to avoid drawing outside of the bitmap memory
   grect_standardize(&rect);
-  grect_clip(&rect, &dest_bitmap->bounds);
-  grect_clip(&rect, &ctx->draw_state.clip_box);
+  // Copy packed struct members to local variables to avoid taking address warnings
+  GRect dest_bounds = dest_bitmap->bounds;
+  GRect clip_box = ctx->draw_state.clip_box;
+  grect_clip(&rect, &dest_bounds);
+  grect_clip(&rect, &clip_box);
   // Bail out early if the clipped drawing rectangle is empty
   if (grect_is_empty(&rect)) {
     goto call_processor_post_function_and_return;
@@ -197,7 +200,9 @@ void graphics_draw_rotated_bitmap(GContext* ctx, GBitmap *src, GPoint src_ic, in
   // Backup context color
   const GColor ctx_color = ctx->draw_state.stroke_color;
 
-  if (grect_contains_point(&src->bounds, &src_ic)) {
+  // Copy packed struct member to local variable to avoid taking address warning
+  GRect src_bounds = src->bounds;
+  if (grect_contains_point(&src_bounds, &src_ic)) {
     // TODO: Optimize further (PBL-15657)
     // If src_ic is within the bounds of the source image, do the following performance
     // optimization:
