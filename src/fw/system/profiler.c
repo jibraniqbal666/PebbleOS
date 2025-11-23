@@ -38,11 +38,20 @@
 #include "sdkconfig.h"
 // Include asm_compat.h FIRST before any ESP-IDF headers that use 'asm' keyword
 #include "asm_compat.h"
-// Use ESP-IDF's utility function instead of direct CSR access to avoid assembler issues
-#include "riscv/rv_utils.h"
 // ESP32-C3 uses RISC-V cycle counter (mcycle CSR = 0xB00) instead of ARM DWT
 #define ESP32C3_CPU_FREQ_MHZ CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
 #define ESP32C3_CPU_FREQ_HZ (ESP32C3_CPU_FREQ_MHZ * 1000000ULL)
+
+// ESP32-C3 has SOC_CPU_HAS_CSR_PC, so it uses CSR_PCCR_MACHINE (0x7e2) instead of mcycle
+// Create our own CSR read function to avoid ESP-IDF's inline assembly macros
+// which have issues with assembler flag passing
+static inline uint32_t prv_read_cycle_count(void) {
+  uint32_t result;
+  // Use direct inline assembly with mcycle CSR (0xB00) which is simpler
+  // ESP32-C3 supports mcycle even though it also has CSR_PCCR_MACHINE
+  __asm__ volatile ("csrr %0, mcycle" : "=r" (result));
+  return result;
+}
 #endif
 
 #if PULSE_EVERYWHERE
@@ -121,8 +130,8 @@ void profiler_init(void) {
 void profiler_start(void) {
 #if defined(MICRO_FAMILY_ESP32C3)
   // ESP32-C3 uses RISC-V cycle counter (mcycle CSR = 0xB00)
-  // Use ESP-IDF's utility function which handles the CSR read properly
-  g_profiler.start = rv_utils_get_cycle_count();
+  // Use our own CSR read function to avoid assembler flag issues
+  g_profiler.start = prv_read_cycle_count();
 #else
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
 #ifdef MICRO_FAMILY_STM32F7
@@ -137,8 +146,8 @@ void profiler_start(void) {
 void profiler_stop(void) {
 #if defined(MICRO_FAMILY_ESP32C3)
   // ESP32-C3 uses RISC-V cycle counter (mcycle CSR = 0xB00)
-  // Use ESP-IDF's utility function which handles the CSR read properly
-  g_profiler.end = rv_utils_get_cycle_count();
+  // Use our own CSR read function to avoid assembler flag issues
+  g_profiler.end = prv_read_cycle_count();
 #else
   g_profiler.end = DWT->CYCCNT;
 #endif

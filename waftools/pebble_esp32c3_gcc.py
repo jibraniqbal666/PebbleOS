@@ -27,9 +27,8 @@ def configure(conf):
     conf.env.CC = CROSS_COMPILE_PREFIX + 'gcc'
     conf.env.LINK_CC = conf.env.CC
     
-    # Set GCC target architecture to ensure it passes correct flags to assembler for inline assembly
-    # This is important for CSR instructions that require zicsr extension
-    conf.env.append_value('CFLAGS', ['-march=rv32imczicsr'])
+    # Note: Architecture flags will be set later in args, don't set them here
+    # Setting them early can cause issues with flag ordering
 
     conf.find_program('ccache', var='CCACHE', mandatory=False)
     if conf.env.CCACHE:
@@ -91,14 +90,13 @@ def configure(conf):
     conf.env.append_value('LINKFLAGS', ['-Wl,--warn-common'])
 
     # Add architecture flags to CFLAGS
-    # GCC should automatically pass -march to the assembler when processing inline assembly,
+    # For inline assembly processing, GCC should automatically pass -march to the assembler,
     # but we also explicitly pass it via -Wa to ensure the assembler recognizes zicsr extension
-    # IMPORTANT: The -Wa flag must come AFTER -march in CFLAGS for proper processing
+    # Add architecture flags first
     conf.env.append_value('CFLAGS', args)
-    # Pass architecture to assembler explicitly for inline assembly processing
-    # The assembler needs to know about zicsr extension for CSR instructions in ESP-IDF headers
-    # Use -Wa to pass flags directly to the assembler
-    # Note: Multiple -Wa flags can be combined: -Wa,flag1,flag2
+    # Then explicitly pass architecture to assembler for inline assembly processing
+    # The assembler needs to know about zicsr extension for CSR instructions
+    # IMPORTANT: -Wa flag must come AFTER -march flag for proper processing
     conf.env.append_value('CFLAGS', ['-Wa,-march=rv32imczicsr'])
     # ASFLAGS already set above with architecture flags
     conf.env.append_value('LINKFLAGS', args)

@@ -615,6 +615,8 @@ def _build_recovery(bld):
     if bld.is_esp32c3():
         excludes.append('kernel/core_dump.c')
         excludes.append('vector_table.c')  # ESP32-C3 uses ESP-IDF's interrupt handling
+        excludes.append('system/profiler.c')  # Profiler not essential for bootloader
+        excludes.append('syscall/profiler_syscalls.c')  # Profiler syscalls not essential
 
     if 'MFG_INFO_RECORDS_TEST_RESULTS' not in bld.env.DEFINES:
         excludes.extend('mfg/results_ui.c')
@@ -758,6 +760,8 @@ def _build_normal(bld):
     if bld.is_esp32c3():
         excludes.append('kernel/core_dump.c')
         excludes.append('vector_table.c')  # ESP32-C3 uses ESP-IDF's interrupt handling
+        excludes.append('system/profiler.c')  # Profiler not essential for bootloader
+        excludes.append('syscall/profiler_syscalls.c')  # Profiler syscalls not essential
 
     if not bld.capability('HAS_BUILTIN_HRM'):
         excludes.append('popups/ble_hrm/**')
