@@ -27,7 +27,11 @@
 #include "system/passert.h"
 #include "util/mbuf.h"
 
-#define USE_SMARTSTRAP (CAPABILITY_HAS_ACCESSORY_CONNECTOR && !defined(RECOVERY_FW))
+#if CAPABILITY_HAS_ACCESSORY_CONNECTOR && !defined(RECOVERY_FW)
+#define USE_SMARTSTRAP 1
+#else
+#define USE_SMARTSTRAP 0
+#endif
 
 #if USE_SMARTSTRAP
 // Event handler

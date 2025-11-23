@@ -25,7 +25,7 @@
 #include "util/time/time.h"
 #include "util/uuid.h"
 
-#if !PLATFORM_TINTIN
+#if !PLATFORM_TINTIN && CAPABILITY_HAS_VIBE_SCORES
 #include "services/normal/vibes/vibe_score_info.h"
 #endif
 
@@ -490,7 +490,7 @@ void analytics_event_put_byte_stats(
 void analytics_event_app_crash(const Uuid *uuid, uint32_t pc, uint32_t lr, const uint8_t *build_id,
                                bool is_rocky_app);
 
-#if !PLATFORM_TINTIN
+#if !PLATFORM_TINTIN && CAPABILITY_HAS_VIBE_SCORES
 //! Log the user's vibration pattern
 //! @param VibePatternFeature Notifications, Phone Calls, or Alarms
 void analytics_event_vibe_access(VibePatternFeature vibe_feature, VibeScoreId pattern_id);

@@ -21,7 +21,11 @@
 #include "applib/ui/text_layer.h"
 #include "applib/ui/window.h"
 
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"  // Use PebbleOS's custom time.h for ESP32-C3
+#else
 #include <time.h>
+#endif
 
 struct TimeRangeSelectionWindowData;
 

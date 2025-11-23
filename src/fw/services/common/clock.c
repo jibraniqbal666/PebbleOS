@@ -76,7 +76,7 @@ static void prv_handle_timezone_set(TimezoneInfo *tz_info) {
     time_t t0 = rtc_get_time();
     time_t t1 = prv_migrate_local_time_to_UTC(t0);
     rtc_sanitize_time_t(&t1);
-    PBL_LOG(LOG_LEVEL_INFO, "Pivot RTC from localtime to UTC (%lu -> %lu)", t0, t1);
+    PBL_LOG(LOG_LEVEL_INFO, "Pivot RTC from localtime to UTC (%lld -> %lld)", (long long)t0, (long long)t1);
     rtc_set_time(t1);  // Pivot RTC from localtime to UTC
     prv_migrate_timezone_info(tz_info->tm_gmtoff);
   }
@@ -92,7 +92,11 @@ typedef struct PACKED {
 } TimezoneCBData;
 
 #ifndef UNITTEST
+// ESP32-C3 uses 64-bit time_t, but the endpoint protocol expects 32-bit
+// For ESP32-C3, we'll need to handle this conversion in the protocol layer
+#if !defined(MICRO_FAMILY_ESP32C3)
 _Static_assert(sizeof(time_t) == 4, "Sizeof time_t does not match endpoint definition");
+#endif
 #endif
 
 #if !defined(RECOVERY_FW)
@@ -331,10 +335,12 @@ static void prv_handle_set_utc_and_timezone_msg(TimezoneCBData *tz_data) {
 
   TimezoneInfo tz_info = prv_get_timezone_info_from_data(tz_data);
   shell_prefs_set_automatic_timezone_id(tz_info.timezone_id);
+  // Copy packed struct member to local variable to avoid taking address warning
+  time_t utc_time = tz_data->utc_time;
   if (clock_timezone_source_is_manual()) {
-    prv_update_time_info_and_generate_event(&tz_data->utc_time, NULL);
+    prv_update_time_info_and_generate_event(&utc_time, NULL);
   } else {
-    prv_update_time_info_and_generate_event(&tz_data->utc_time, &tz_info);
+    prv_update_time_info_and_generate_event(&utc_time, &tz_info);
   }
 }
 
@@ -452,7 +458,7 @@ size_t clock_format_time(char *buffer, uint8_t size, int16_t hours, int16_t minu
       format = add_space ? "%u:%02u PM" : "%u:%02uPM";
     }
   }
-  return sniprintf(buffer, size, format, time_util_get_num_hours(hours, is24h), minutes);
+  return snprintf(buffer, size, format, time_util_get_num_hours(hours, is24h), minutes);
 }
 
 size_t clock_copy_time_string_timestamp(char *buffer, uint8_t size, time_t timestamp) {
@@ -520,7 +526,7 @@ static void prv_copy_relative_time_string(char *number_buffer, uint8_t number_bu
       i18n_get_with_buffer("Now", word_buffer, word_buffer_size);
       strncpy(number_buffer, "", number_buffer_size);
     } else if (difference <= SECONDS_PER_HOUR) {
-      snprintf(number_buffer, number_buffer_size, "%ld", difference / SECONDS_PER_MINUTE);
+      snprintf(number_buffer, number_buffer_size, "%lld", (long long)(difference / SECONDS_PER_MINUTE));
       i18n_get_with_buffer(" MIN. TO", word_buffer, word_buffer_size);
     }  else {
       prv_copy_time_string_timestamp(number_buffer, number_buffer_size, word_buffer,

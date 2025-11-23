@@ -200,7 +200,9 @@ static void prv_collapse_animation_update_rect(GContext *ctx,
   } else {
     // First blank out any left overs from a previous frame to make sure we have a solid color
     // background.
-    graphics_fill_rect(ctx, &ctx->draw_state.clip_box);
+    // Copy packed struct member to local variable to avoid taking address warning
+    GRect clip_box = ctx->draw_state.clip_box;
+    graphics_fill_rect(ctx, &clip_box);
 
     // Draw in an expanding inner ring of the incoming app framebuffer.
     // Note that this only expands because we're running the animation backwards.

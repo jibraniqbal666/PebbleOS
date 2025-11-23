@@ -602,7 +602,7 @@ static NOINLINE TimelineItem *prv_create_summary_pin(time_t pin_time_utc, time_t
   if (percentage == 0) {
     strcpy(percentage_buf, "0%");
   } else {
-    sniprintf(percentage_buf, SUBTITLE_BUFFER_LENGTH, "%+d%%", percentage);
+    snprintf(percentage_buf, SUBTITLE_BUFFER_LENGTH, "%+d%%", percentage);
   }
   attribute_list_add_cstring(&pin_attr_list, AttributeIdSubtitle, percentage_buf);
 
@@ -659,7 +659,7 @@ static void prv_push_reward(time_t now_utc, const RewardNotifConfig *notif_confi
                  &notif_config->state->last_triggered_utc,
                  sizeof(notif_config->state->last_triggered_utc));
 
-  INSIGHTS_LOG_DEBUG("Saved reward state: %ld", notif_config->state->last_triggered_utc);
+  INSIGHTS_LOG_DEBUG("Saved reward state: %lld", (long long)notif_config->state->last_triggered_utc);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1097,7 +1097,7 @@ static void prv_generate_sleep_pin_strings(int32_t sleep_enter_seconds,
   // Generate short subtitle text with the current step count
   int hours = sleep_total_seconds / SECONDS_PER_HOUR;
   int minutes = (sleep_total_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE;
-  sniprintf(SLEEP_SUMMARY_PIN_CONFIG.short_subtitle, SUBTITLE_BUFFER_LENGTH,
+  snprintf(SLEEP_SUMMARY_PIN_CONFIG.short_subtitle, SUBTITLE_BUFFER_LENGTH,
             i18n_get("%uH %uM Sleep", &SLEEP_SUMMARY_PIN_CONFIG), hours, minutes);
 
   i18n_free_all(&SLEEP_SUMMARY_PIN_CONFIG);
@@ -1252,7 +1252,7 @@ static void prv_do_sleep_notification(time_t now_utc, time_t sleep_exit_utc,
   // Notify about the pin after a certain amount of time
   const time_t since_exited = now_utc - sleep_exit_utc;
   if (since_exited < s_sleep_summary_settings.summary.sleep.trigger_notif_seconds) {
-    INSIGHTS_LOG_DEBUG("Not notifying sleep pin - not trigger time yet (%ld)", since_exited);
+    INSIGHTS_LOG_DEBUG("Not notifying sleep pin - not trigger time yet (%lld)", (long long)since_exited);
     return;
   }
 
@@ -1336,7 +1336,7 @@ static void prv_do_sleep_summary(time_t now_utc) {
   if (sleep_exit_utc <= s_sleep_pin_state.last_triggered_utc) {
     // Notify about the sleep pin
     prv_do_sleep_notification(now_utc, sleep_exit_utc, sleep_total_seconds);
-    INSIGHTS_LOG_DEBUG("Not adding sleep pin - already checked session %ld", sleep_exit_utc);
+    INSIGHTS_LOG_DEBUG("Not adding sleep pin - already checked session %lld", (long long)sleep_exit_utc);
     return;
   }
 
@@ -1720,7 +1720,7 @@ static bool prv_push_activity_summary_pin(time_t now_utc, time_t pin_time_utc, i
                                           ActivityScalarStore steps,
                                           ActivityScalarStore total_steps_avg,
                                           Uuid *uuid) {
-  sniprintf(ACTIVITY_SUMMARY_PIN_CONFIG.short_subtitle, SUBTITLE_BUFFER_LENGTH,
+  snprintf(ACTIVITY_SUMMARY_PIN_CONFIG.short_subtitle, SUBTITLE_BUFFER_LENGTH,
             i18n_get("%u Steps", &ACTIVITY_SUMMARY_PIN_CONFIG), steps);
 
   i18n_free_all(&ACTIVITY_SUMMARY_PIN_CONFIG);
@@ -2267,10 +2267,10 @@ void activity_insights_init(time_t now_utc) {
     activity_private_settings_close(file);
   }
 
-  INSIGHTS_LOG_DEBUG("Last sleep reward state: %ld",
-                     s_sleep_reward_state.common.last_triggered_utc);
-  INSIGHTS_LOG_DEBUG("Last activity reward state: %ld",
-                     s_activity_reward_state.common.last_triggered_utc);
+  INSIGHTS_LOG_DEBUG("Last sleep reward state: %lld",
+                     (long long)s_sleep_reward_state.common.last_triggered_utc);
+  INSIGHTS_LOG_DEBUG("Last activity reward state: %lld",
+                     (long long)s_activity_reward_state.common.last_triggered_utc);
 
   // Recalculate metric stats
   activity_insights_recalculate_stats();

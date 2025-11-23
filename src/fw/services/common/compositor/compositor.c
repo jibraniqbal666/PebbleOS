@@ -172,6 +172,7 @@ void compositor_render_app(void) {
   app_manager_get_framebuffer_size(&app_framebuffer_size);
 
   const FrameBuffer *app_framebuffer = app_state_get_framebuffer();
+  (void)app_framebuffer; // Suppress unused variable warning for ESP32-C3
 
   if (gsize_equal(&app_framebuffer_size, &s_framebuffer.size)) {
 #if CAPABILITY_COMPOSITOR_USES_DMA && !TARGET_QEMU && !UNITTEST
@@ -300,7 +301,10 @@ void compositor_render_modal(void) {
   static GDrawState prev_state;
   prev_state = ctx->draw_state;
 
-  gpoint_add_eq(&ctx->draw_state.drawing_box.origin, s_animation_state.modal_offset);
+  // Copy packed struct member to local variable to avoid taking address warning
+  GPoint origin = ctx->draw_state.drawing_box.origin;
+  gpoint_add_eq(&origin, s_animation_state.modal_offset);
+  ctx->draw_state.drawing_box.origin = origin;
 
   modal_manager_render(ctx);
 

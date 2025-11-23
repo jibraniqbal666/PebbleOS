@@ -89,6 +89,10 @@ def build(bld):
                 excludes.append('common/battery/voltage/**')
                 # Exclude weather service (not yet implemented for ESP32-C3)
                 excludes.append('normal/weather/**')
+                # Exclude vibe scores (not essential for bootloader, requires CAPABILITY_HAS_VIBE_SCORES)
+                excludes.append('normal/vibes/vibe_score.c')
+                excludes.append('normal/vibes/vibe_score_info.c')
+                excludes.append('normal/vibes/vibe_client.c')  # Depends on vibe_score_info.h which includes vibes.def
 
             return excludes
 

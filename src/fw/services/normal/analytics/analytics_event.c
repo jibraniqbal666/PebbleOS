@@ -604,7 +604,7 @@ void analytics_event_put_byte_stats(
 }
 
 // ------------------------------------------------------------------------------------------
-#if !PLATFORM_TINTIN
+#if !PLATFORM_TINTIN && CAPABILITY_HAS_VIBE_SCORES
 void analytics_event_vibe_access(VibePatternFeature vibe_feature, VibeScoreId pattern_id) {
   AnalyticsEventBlob event_blob = {
     .event = AnalyticsEvent_VibeAccess,

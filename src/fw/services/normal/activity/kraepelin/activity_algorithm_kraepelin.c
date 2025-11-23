@@ -926,8 +926,13 @@ void activity_algorithm_handle_accel(AccelRawData *data, uint32_t num_samples,
 // Returns distance we traveled in the last minute, in mm.
 static uint32_t NOINLINE prv_fill_minute_record(time_t utc_sec, AlgMinuteDLSSample *m_rec) {
   bool still;
-  kalg_minute_stats(s_alg_state->k_state, &m_rec->base.vmc,
-                    &m_rec->base.orientation, &still);
+  // Copy packed struct members to local variables to avoid taking address warning
+  uint16_t vmc = m_rec->base.vmc;
+  uint8_t orientation = m_rec->base.orientation;
+  kalg_minute_stats(s_alg_state->k_state, &vmc, &orientation, &still);
+  // Copy results back to packed struct
+  m_rec->base.vmc = vmc;
+  m_rec->base.orientation = orientation;
 
   m_rec->base.steps = MIN(s_alg_state->minute_steps, UINT8_MAX);
 

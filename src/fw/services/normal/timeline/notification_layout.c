@@ -173,9 +173,11 @@ static void prv_notification_timestamp_update(const LayoutLayer *layout_ref,
   clock_get_since_time(buffer, config->buffer_size, layout->info.item->header.timestamp);
 }
 
-#if !PLATFORM_TINTIN
+#if !PLATFORM_TINTIN && !defined(MICRO_FAMILY_ESP32C3)
 static const EmojiEntry s_emoji_table[] = JUMBOJI_TABLE(EMOJI_ENTRY);
+#endif
 
+#if !PLATFORM_TINTIN
 static bool prv_each_emoji_codepoint(int index, Codepoint codepoint, void *context) {
   Codepoint *emoji_codepoint = context;
   if (codepoint_is_end_of_word(codepoint) ||
@@ -202,6 +204,12 @@ fail:
 }
 
 T_STATIC ResourceId prv_get_emoji_icon_by_string(const EmojiEntry *table, const char *str) {
+#if defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3 doesn't have emoji resources
+  (void)table;
+  (void)str;
+  return INVALID_RESOURCE;
+#else
   if (!str) {
     return INVALID_RESOURCE;
   }
@@ -214,11 +222,18 @@ T_STATIC ResourceId prv_get_emoji_icon_by_string(const EmojiEntry *table, const 
     }
   }
   return INVALID_RESOURCE;
+#endif
 }
 
 static ResourceId prv_get_emoji_icon(NotificationLayout *layout) {
+#if defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3 doesn't have emoji resources
+  (void)layout;
+  return INVALID_RESOURCE;
+#else
   const char *body = attribute_get_string(layout->layout.attributes, AttributeIdBody, NULL);
   return prv_get_emoji_icon_by_string(s_emoji_table, body);
+#endif
 }
 
 static bool prv_should_enlarge_emoji(NotificationLayout *layout) {

@@ -201,7 +201,10 @@ static void prv_draw_in(GContext *ctx, int move_size, uint32_t distance, bool ve
   bitblt_bitmap_into_bitmap(&sys_bitmap, &app_bitmap, point, GCompOpAssign, GColorWhite);
 
   const GPoint drawing_box_origin = ctx->draw_state.drawing_box.origin;
-  gpoint_add_eq(&ctx->draw_state.drawing_box.origin, point);
+  // Copy to local variable to avoid taking address of packed member
+  GPoint updated_origin = drawing_box_origin;
+  gpoint_add_eq(&updated_origin, point);
+  ctx->draw_state.drawing_box.origin = updated_origin;
   compositor_render_modal();
   ctx->draw_state.drawing_box.origin = drawing_box_origin;
 }
