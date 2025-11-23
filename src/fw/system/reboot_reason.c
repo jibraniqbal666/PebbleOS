@@ -25,6 +25,7 @@
 #define STM32F7_COMPATIBLE
 #define NRF5_COMPATIBLE
 #define SF32LB52_COMPATIBLE
+#define ESP32C3_COMPATIBLE
 #include <mcu.h>
 
 #include <inttypes.h>
@@ -33,6 +34,12 @@
 #include "task.h"
 
 _Static_assert(sizeof(RebootReason) == sizeof(uint32_t[4]), "RebootReason is a funny size");
+
+#if defined(MICRO_FAMILY_ESP32C3)
+// ESP32-C3 doesn't have RTC backup registers, use static variables for storage
+static uint32_t s_reboot_reason_registers[4] = {0};
+static uint32_t s_slot_of_last_launched_app = 0;
+#endif
 
 void reboot_reason_set(RebootReason *reason) {
 #if MICRO_FAMILY_NRF5
@@ -67,6 +74,23 @@ void reboot_reason_set(RebootReason *reason) {
   HAL_Set_backup(REBOOT_REASON_STUCK_TASK_PC, raw[1]);
   HAL_Set_backup(REBOOT_REASON_STUCK_TASK_LR, raw[2]);
   HAL_Set_backup(REBOOT_REASON_STUCK_TASK_CALLBACK, raw[3]);
+#elif defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3 doesn't have RTC backup registers, use static variables
+  uint32_t *raw = (uint32_t*)reason;
+
+  if (s_reboot_reason_registers[0]) {
+    // It's not safe to log if we're called from an ISR or from a FreeRTOS critical section
+    // For ESP32-C3, we can't easily check BASEPRI, so just check ISR and scheduler state
+    if (!mcu_state_is_isr() && xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
+      PBL_LOG(LOG_LEVEL_WARNING, "Reboot reason is already set");
+    }
+    return;
+  }
+
+  s_reboot_reason_registers[0] = raw[0];
+  s_reboot_reason_registers[1] = raw[1];
+  s_reboot_reason_registers[2] = raw[2];
+  s_reboot_reason_registers[3] = raw[3];
 #else
   uint32_t *raw = (uint32_t*)reason;
 
@@ -97,6 +121,10 @@ void reboot_reason_set_restarted_safely(void) {
 #elif defined MICRO_FAMILY_SF32LB52
   uint32_t* raw = (uint32_t *)&reason;
   HAL_Set_backup(REBOOT_REASON_REGISTER_1, *raw);
+#elif defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3: Use static variable storage
+  uint32_t* raw = (uint32_t *)&reason;
+  s_reboot_reason_registers[0] = *raw;
 #else
   uint32_t* raw = (uint32_t *)&reason;
   RTC_WriteBackupRegister(REBOOT_REASON_REGISTER_1, *raw);
@@ -116,6 +144,13 @@ void reboot_reason_get(RebootReason *reason) {
   raw[1] = HAL_Get_backup(REBOOT_REASON_STUCK_TASK_PC);
   raw[2] = HAL_Get_backup(REBOOT_REASON_STUCK_TASK_LR);
   raw[3] = HAL_Get_backup(REBOOT_REASON_STUCK_TASK_CALLBACK);
+#elif defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3: Use static variable storage
+  uint32_t *raw = (uint32_t *)reason;
+  raw[0] = s_reboot_reason_registers[0];
+  raw[1] = s_reboot_reason_registers[1];
+  raw[2] = s_reboot_reason_registers[2];
+  raw[3] = s_reboot_reason_registers[3];
 #else
   uint32_t *raw = (uint32_t *)reason;
   raw[0] = RTC_ReadBackupRegister(REBOOT_REASON_REGISTER_1);
@@ -136,6 +171,12 @@ void reboot_reason_clear(void) {
   HAL_Set_backup(REBOOT_REASON_STUCK_TASK_PC, 0);
   HAL_Set_backup(REBOOT_REASON_STUCK_TASK_LR, 0);
   HAL_Set_backup(REBOOT_REASON_STUCK_TASK_CALLBACK, 0);
+#elif defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3: Clear static variable storage
+  s_reboot_reason_registers[0] = 0;
+  s_reboot_reason_registers[1] = 0;
+  s_reboot_reason_registers[2] = 0;
+  s_reboot_reason_registers[3] = 0;
 #else
   RTC_WriteBackupRegister(REBOOT_REASON_REGISTER_1, 0);
   RTC_WriteBackupRegister(REBOOT_REASON_STUCK_TASK_PC, 0);
@@ -149,6 +190,9 @@ uint32_t reboot_get_slot_of_last_launched_app(void) {
   return retained_read(SLOT_OF_LAST_LAUNCHED_APP);
 #elif defined MICRO_FAMILY_SF32LB52
   return HAL_Get_backup(SLOT_OF_LAST_LAUNCHED_APP);
+#elif defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3: Use static variable storage
+  return s_slot_of_last_launched_app;
 #else
   return RTC_ReadBackupRegister(SLOT_OF_LAST_LAUNCHED_APP);
 #endif
@@ -159,6 +203,9 @@ void reboot_set_slot_of_last_launched_app(uint32_t app_slot) {
   retained_write(SLOT_OF_LAST_LAUNCHED_APP, app_slot);
 #elif defined MICRO_FAMILY_SF32LB52
   HAL_Set_backup(SLOT_OF_LAST_LAUNCHED_APP, app_slot);
+#elif defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3: Use static variable storage
+  s_slot_of_last_launched_app = app_slot;
 #else
   RTC_WriteBackupRegister(SLOT_OF_LAST_LAUNCHED_APP, app_slot);
 #endif

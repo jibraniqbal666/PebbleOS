@@ -18,6 +18,7 @@
 
 #define CMSIS_COMPATIBLE
 #define SF32LB52_COMPATIBLE
+#define ESP32C3_COMPATIBLE
 #include <mcu.h>
 
 #include "board/board.h"
@@ -32,6 +33,11 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "kernel/portmacro_esp32c3.h"
+#include "esp_system.h"
+#endif
 
 void system_reset_prepare(bool unsafe_reset) {
   fw_prepare_for_reset(unsafe_reset);
@@ -74,6 +80,9 @@ NORETURN system_hard_reset(void) {
 
 #if MICRO_FAMILY_SF32LB52
   HAL_PMU_Reboot();
+#elif defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3 uses ESP-IDF's restart function
+  esp_restart();
 #else
   NVIC_SystemReset();
 #endif

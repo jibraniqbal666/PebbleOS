@@ -55,6 +55,28 @@ extern uint32_t retained_read(uint8_t id);
 #define REBOOT_REASON_STUCK_TASK_CALLBACK       8
 #define SLOT_OF_LAST_LAUNCHED_APP               9
 
+#elif MICRO_FAMILY_ESP32C3
+/* ESP32-C3 doesn't have RTC backup registers like STM32
+ * These are dummy values - actual implementation uses static variables in bootbits.c */
+#define RTC_BKP_BOOTBIT_DR                      0
+#define STUCK_BUTTON_REGISTER                   1
+#define BOOTLOADER_VERSION_REGISTER             2
+#define CURRENT_TIME_REGISTER                   3
+#define CURRENT_INTERVAL_TICKS_REGISTER         4
+#define REBOOT_REASON_REGISTER_1                5
+#define REBOOT_REASON_STUCK_TASK_PC             6
+#define REBOOT_REASON_STUCK_TASK_LR             7
+#define REBOOT_REASON_STUCK_TASK_CALLBACK       8
+#define RTC_BKP_FLASH_ERASE_PROGRESS            11
+#define RTC_TIMEZONE_ABBR_START                 12
+#define RTC_TIMEZONE_ABBR_END_TZID_DSTID        13
+#define RTC_TIMEZONE_GMTOFFSET                  14
+#define RTC_TIMEZONE_DST_START                  15
+#define RTC_TIMEZONE_DST_END                    16
+#define MAG_XY_CORRECTION_VALS                 17
+#define MAG_Z_CORRECTION_VAL                    18
+#define SLOT_OF_LAST_LAUNCHED_APP               19
+
 #else
 #define RTC_BKP_BOOTBIT_DR                      RTC_BKP_DR0
 #define STUCK_BUTTON_REGISTER                   RTC_BKP_DR1

@@ -44,7 +44,7 @@ RebootReasonCode reboot_reason_get_last_reboot_reason(void) {
 void debug_reboot_reason_print(McuRebootReason mcu_reboot_reason) {
   RebootReason reason;
   reboot_reason_get(&reason);
-  bool show_reset_alert = !reason.restarted_safely;
+  bool show_reset_alert __attribute__((unused)) = !reason.restarted_safely;
   s_last_reboot_reason_code = reason.code;
 
   // We're out of flash space, scrape a few bytes back!

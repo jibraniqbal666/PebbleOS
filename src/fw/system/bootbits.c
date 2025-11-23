@@ -26,6 +26,7 @@
 #define STM32F7_COMPATIBLE
 #define NRF5_COMPATIBLE
 #define SF32LB52_COMPATIBLE
+#define ESP32C3_COMPATIBLE
 #include <mcu.h>
 
 #include <inttypes.h>
@@ -147,6 +148,56 @@ void boot_version_write(void) {
 
 uint32_t boot_version_read(void) {
   return 0xABCD1234;
+}
+
+#elif MICRO_FAMILY_ESP32C3
+
+// ESP32-C3 doesn't have RTC backup registers like STM32
+// Use static variables for bootbits storage (non-persistent across resets)
+static uint32_t s_bootbits = 0;
+static uint32_t s_boot_version = 0;
+
+void boot_bit_init(void) {
+  rtc_init();
+  if (!boot_bit_test(BOOT_BIT_INITIALIZED)) {
+    s_bootbits = BOOT_BIT_INITIALIZED;
+  }
+}
+
+void boot_bit_set(BootBitValue bit) {
+  s_bootbits |= bit;
+}
+
+void boot_bit_clear(BootBitValue bit) {
+  s_bootbits &= ~bit;
+}
+
+bool boot_bit_test(BootBitValue bit) {
+  return (s_bootbits & bit) != 0;
+}
+
+void boot_bit_dump(void) {
+  PBL_LOG(LOG_LEVEL_DEBUG, "0x%"PRIx32, s_bootbits);
+}
+
+uint32_t boot_bits_get(void) {
+  return s_bootbits;
+}
+
+void command_boot_bits_get(void) {
+  char buffer[32];
+  dbgserial_putstr_fmt(buffer, sizeof(buffer), "bootbits: 0x%"PRIu32, boot_bits_get());
+}
+
+void boot_version_write(void) {
+  if (boot_version_read() == TINTIN_METADATA.version_timestamp) {
+    return;
+  }
+  s_boot_version = TINTIN_METADATA.version_timestamp;
+}
+
+uint32_t boot_version_read(void) {
+  return s_boot_version;
 }
 
 #else

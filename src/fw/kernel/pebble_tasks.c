@@ -29,6 +29,10 @@
 #include "task.h"
 #include "queue.h"
 
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "kernel/pbl_malloc.h"  // For kernel_malloc
+#endif
+
 TaskHandle_t g_task_handles[NumPebbleTask] KERNEL_READONLY_DATA = { 0 };
 
 static void prv_task_register(PebbleTask task, TaskHandle_t task_handle) {
@@ -51,7 +55,12 @@ const char* pebble_task_get_name(PebbleTask task) {
   if (!task_handle) {
     return "Unknown";
   }
+#if defined(MICRO_FAMILY_ESP32C3)
+  // ESP-IDF uses pcTaskGetName instead of pcTaskGetTaskName
+  return (const char*) pcTaskGetName(task_handle);
+#else
   return (const char*) pcTaskGetTaskName(task_handle);
+#endif
 }
 
 // NOTE: The logging support calls toupper() this character if the task is currently running privileged, so
@@ -210,6 +219,41 @@ void pebble_task_create(PebbleTask pebble_task, TaskParameters_t *task_params,
       WTF;
   }
 
+#if defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3 doesn't have MPU, use regular xTaskCreateStatic instead of xTaskCreateRestricted
+  TaskHandle_t new_handle;
+  // Extract task parameters from TaskParameters_t structure
+  // ESP-IDF's xTaskCreateStatic signature:
+  // TaskHandle_t xTaskCreateStatic(TaskFunction_t pxTaskCode,
+  //                                 const char * const pcName,
+  //                                 const uint32_t ulStackDepth,
+  //                                 void * const pvParameters,
+  //                                 UBaseType_t uxPriority,
+  //                                 StackType_t * const puxStackBuffer,
+  //                                 StaticTask_t * const pxTaskBuffer);
+  // We need to allocate StaticTask_t buffer - use kernel malloc
+  StaticTask_t *pxTaskBuffer = (StaticTask_t*)kernel_malloc(sizeof(StaticTask_t));
+  PBL_ASSERTN(pxTaskBuffer != NULL);
+  
+  // Remove portPRIVILEGE_BIT from priority for ESP32-C3 (no privilege separation)
+  UBaseType_t priority = task_params->uxPriority;
+#if defined(portPRIVILEGE_BIT)
+  if (priority & portPRIVILEGE_BIT) {
+    priority &= ~portPRIVILEGE_BIT;
+  }
+#endif
+  
+  new_handle = xTaskCreateStatic(
+    task_params->pvTaskCode,
+    task_params->pcName,
+    task_params->usStackDepth,
+    task_params->pvParameters,
+    priority,
+    (StackType_t*)task_params->puxStackBuffer,
+    pxTaskBuffer
+  );
+  PBL_ASSERT(new_handle != NULL, "Could not start task %s", task_params->pcName);
+#else
   const MpuRegion *region_ptrs[portNUM_CONFIGURABLE_REGIONS] = {
     // FIXME(SF32LB52): Not supported on ARMv8 MPU yet
 #ifndef MICRO_FAMILY_SF32LB52
@@ -224,6 +268,7 @@ void pebble_task_create(PebbleTask pebble_task, TaskParameters_t *task_params,
   TaskHandle_t new_handle;
   PBL_ASSERT(xTaskCreateRestricted(task_params, &new_handle) == pdTRUE, "Could not start task %s",
              task_params->pcName);
+#endif
   if (handle) {
     *handle = new_handle;
   }
@@ -231,6 +276,11 @@ void pebble_task_create(PebbleTask pebble_task, TaskParameters_t *task_params,
 }
 
 void pebble_task_configure_idle_task(void) {
+#if defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3 doesn't have MPU, so there's nothing to configure for the idle task
+  // Just return without doing anything
+  return;
+#else
   // We don't have the opportunity to configure the IDLE task before FreeRTOS
   // creates it, so we have to configure the MPU regions properly after the
   // fact. This is only an issue on platforms with a cache, as altering the base
@@ -254,4 +304,5 @@ void pebble_task_configure_idle_task(void) {
   MemoryRegion_t region_config[portNUM_CONFIGURABLE_REGIONS] = {};
   mpu_set_task_configurable_regions(region_config, region_ptrs);
   vTaskAllocateMPURegions(xTaskGetIdleTaskHandle(), region_config);
+#endif
 }

@@ -61,7 +61,10 @@ static int coredump_domain_stat(uint8_t *resp, size_t resp_max_len, void *contex
   };
 
   if (stat_resp->unread == 1) {
-    status_t ret = core_dump_size(addr, &stat_resp->size);
+    // Copy packed member to local variable to avoid taking address of packed member
+    uint32_t size = 0;
+    status_t ret = core_dump_size(addr, &size);
+    stat_resp->size = size;
 
     if (FAILED(ret)) {
       return ret;

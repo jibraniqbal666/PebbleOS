@@ -16,6 +16,7 @@
 
 #include "board/board.h"
 #include "board/boards/board_esp32c3.h"
+#include "drivers/uart.h"
 
 // ESP32-C3 board implementation
 // Minimal implementation for bootloader/firmware support
@@ -24,3 +25,18 @@
 // Note: This is a minimal stub implementation
 // Full board support will be added as needed
 
+// UART DEVICES
+// ESP32-C3 uses UART0 for debug serial (matching bootloader)
+#if defined(MICRO_FAMILY_ESP32C3)
+// For ESP32-C3, we use stub UART driver
+// Since UARTDevice is an opaque type (forward declared in uart.h),
+// we create a minimal dummy structure that can be cast to UARTDevice*
+// The stub UART driver doesn't actually access the structure contents
+typedef struct {
+  void *dummy;
+} DummyUARTDevice;
+
+static const DummyUARTDevice s_dbg_uart_device = {NULL};
+
+UARTDevice * const DBG_UART = (UARTDevice *)&s_dbg_uart_device;
+#endif

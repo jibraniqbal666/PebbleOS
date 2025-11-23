@@ -567,6 +567,14 @@ def _get_comm_sources(bld, is_recovery):
     if bld.env.QEMU:
         excl.append('comm/internals/profiles/ispp.c')
 
+    # Exclude Bluetooth files for ESP32-C3 (Bluetooth not yet supported)
+    if bld.is_esp32c3():
+        excl.append('comm/ble/**')
+        excl.append('comm/bt_lock.c')
+        excl.append('comm/bt_conn_mgr.c')
+        excl.append('comm/bluetooth_analytics.c')
+        excl.append('comm/internals/bt_conn_mgr.c')
+
     if is_recovery:
         excl.append('comm/ble/kernel_le_client/ancs/*.c')
         excl.append('comm/ble/kernel_le_client/ams/*.c')

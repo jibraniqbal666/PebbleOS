@@ -21,6 +21,7 @@
 
 #define CMSIS_COMPATIBLE
 #define SF32LB52_COMPATIBLE
+#define ESP32C3_COMPATIBLE
 #include <mcu.h>
 
 #include <inttypes.h>
@@ -31,6 +32,18 @@
 #ifdef MICRO_FAMILY_NRF5
 #include <drivers/nrfx_common.h>
 #include <soc/nrfx_coredep.h>
+#endif
+
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "sdkconfig.h"
+#include "asm_compat.h"
+#include "riscv/csr.h"
+// ESP32-C3 uses RISC-V cycle counter (mcycle CSR = 0xB00) instead of ARM DWT
+#ifndef CSR_MCYCLE
+#define CSR_MCYCLE 0xB00  // RISC-V standard mcycle CSR
+#endif
+#define ESP32C3_CPU_FREQ_MHZ CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ
+#define ESP32C3_CPU_FREQ_HZ (ESP32C3_CPU_FREQ_MHZ * 1000000ULL)
 #endif
 
 #if PULSE_EVERYWHERE
@@ -93,6 +106,11 @@ void profiler_init(void) {
 }
 
 void profiler_start(void) {
+#if defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3 uses RISC-V cycle counter (mcycle CSR = 0xB00)
+  // Reset cycle counter by reading it (it's always counting)
+  g_profiler.start = RV_READ_CSR(CSR_MCYCLE);
+#else
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
 #ifdef MICRO_FAMILY_STM32F7
   DWT->LAR = 0xC5ACCE55;
@@ -100,10 +118,16 @@ void profiler_start(void) {
   DWT->CYCCNT = 0;
   DWT->CTRL |= 0x01;
   g_profiler.start = DWT->CYCCNT;
+#endif
 }
 
 void profiler_stop(void) {
+#if defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3 uses RISC-V cycle counter (mcycle CSR = 0xB00)
+  g_profiler.end = RV_READ_CSR(CSR_MCYCLE);
+#else
   g_profiler.end = DWT->CYCCNT;
+#endif
 }
 
 uint32_t profiler_node_get_last_cycles(ProfilerNode *node) {
@@ -128,6 +152,8 @@ uint32_t profiler_cycles_to_us(uint32_t cycles) {
   uint32_t mhz = NRFX_DELAY_CPU_FREQ_MHZ;
 #elif defined(MICRO_FAMILY_SF32LB52)
   uint32_t mhz = HAL_RCC_GetHCLKFreq(CORE_ID_HCPU);
+#elif defined(MICRO_FAMILY_ESP32C3)
+  uint32_t mhz = ESP32C3_CPU_FREQ_MHZ;
 #else
   RCC_ClocksTypeDef clocks;
   RCC_GetClocksFreq(&clocks);
@@ -157,6 +183,8 @@ uint32_t profiler_get_total_duration(bool in_us) {
     uint32_t mhz = NRFX_DELAY_CPU_FREQ_MHZ;
 #elif defined(MICRO_FAMILY_SF32LB52)
     uint32_t mhz = HAL_RCC_GetHCLKFreq(CORE_ID_HCPU);
+#elif defined(MICRO_FAMILY_ESP32C3)
+    uint32_t mhz = ESP32C3_CPU_FREQ_MHZ;
 #else
     RCC_ClocksTypeDef clocks;
     RCC_GetClocksFreq(&clocks);
@@ -180,6 +208,10 @@ void profiler_print_stats(void) {
   uint32_t mhz = HAL_RCC_GetHCLKFreq(CORE_ID_HCPU);
   char buf[80];
   PROF_LOG(buf, sizeof(buf), "CPU Frequency: %"PRIu32"MHz", mhz);
+#elif defined(MICRO_FAMILY_ESP32C3)
+  uint32_t mhz = ESP32C3_CPU_FREQ_MHZ;
+  char buf[80];
+  PROF_LOG(buf, sizeof(buf), "CPU Frequency: %"PRIu32"MHz (%lluHz)", mhz, (unsigned long long)ESP32C3_CPU_FREQ_HZ);
 #else
   RCC_ClocksTypeDef clocks;
   RCC_GetClocksFreq(&clocks);

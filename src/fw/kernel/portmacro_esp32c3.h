@@ -52,12 +52,25 @@ static inline bool vPortInCritical(void) {
 #endif
 
 // ESP-IDF's FreeRTOS requires a mutex parameter for portENTER_CRITICAL/portEXIT_CRITICAL
-// Override taskENTER_CRITICAL and taskEXIT_CRITICAL to provide parameterless versions
-// For single-core ESP32-C3, we can pass NULL as the mutex
-// These macros are defined in task.h, so we need to include task.h first, then override
+// For single-core ESP32-C3, the macros just cast the mutex to void and call vPortEnterCritical/vPortExitCritical
+// Create parameterless versions that directly call the underlying functions
+// These macros are defined in portmacro.h, so we override them after including it
+
+// Undefine the original macros and create parameterless versions
+#undef portENTER_CRITICAL
+#undef portEXIT_CRITICAL
+#define portENTER_CRITICAL() do { vPortEnterCritical(); } while(0)
+#define portEXIT_CRITICAL() do { vPortExitCritical(); } while(0)
+
+// Override task macros to use parameterless port macros
 #undef taskENTER_CRITICAL
 #undef taskEXIT_CRITICAL
-#define taskENTER_CRITICAL() portENTER_CRITICAL(NULL)
-#define taskEXIT_CRITICAL() portEXIT_CRITICAL(NULL)
+#define taskENTER_CRITICAL() portENTER_CRITICAL()
+#define taskEXIT_CRITICAL() portEXIT_CRITICAL()
+
+// ESP32-C3 doesn't have MPU, so define MPU-related constants as 0
+#ifndef portNUM_CONFIGURABLE_REGIONS
+#define portNUM_CONFIGURABLE_REGIONS 0
+#endif
 #endif
 

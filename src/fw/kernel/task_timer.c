@@ -24,6 +24,7 @@
 #include "system/logging.h"
 #include "system/passert.h"
 #include "util/list.h"
+#include "drivers/rtc.h"  // For RtcTicks and rtc_get_ticks()
 
 #include "FreeRTOS.h"
 #include "queue.h"

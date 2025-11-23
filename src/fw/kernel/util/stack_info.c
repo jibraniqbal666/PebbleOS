@@ -19,6 +19,11 @@
 
 #include "mcu/interrupts.h"
 
+#if defined(MICRO_FAMILY_ESP32C3)
+// ESP-IDF FreeRTOS uses pxTaskGetStackStart instead of ulTaskGetStackStart
+#include "freertos/idf_additions.h"
+#endif
+
 extern uint32_t __isr_stack_start__[];
 
 uint32_t stack_free_bytes(void) {
@@ -35,7 +40,12 @@ uint32_t stack_free_bytes(void) {
     TaskHandle_t task_handle = xTaskGetCurrentTaskHandle();
     if (task_handle != NULL) {
       // task_handle is NULL before we start the first task
+#if defined(MICRO_FAMILY_ESP32C3)
+      // ESP-IDF uses pxTaskGetStackStart which returns uint8_t *
+      start = (uint32_t)pxTaskGetStackStart(task_handle);
+#else
       start = (uint32_t)ulTaskGetStackStart(task_handle);
+#endif
     }
   }
 

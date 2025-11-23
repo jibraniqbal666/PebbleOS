@@ -18,13 +18,23 @@
 //!
 //! Helper functions intended to be inlined into the calling code.
 
-#if !defined(MICRO_FAMILY_NRF5) && !defined(MICRO_FAMILY_SF32LB52)
+#if !defined(MICRO_FAMILY_NRF5) && !defined(MICRO_FAMILY_SF32LB52) && !defined(MICRO_FAMILY_ESP32C3)
 static inline void exti_enable(ExtiConfig config) {
   exti_enable_other(config.exti_line);
 }
 
 static inline void exti_disable(ExtiConfig config) {
   exti_disable_other(config.exti_line);
+}
+#elif defined(MICRO_FAMILY_ESP32C3)
+// ESP32-C3: ExtiConfig is just GpioteConfig, no exti_line member
+// Stub implementations for ESP32-C3 (GPIO interrupts handled differently)
+static inline void exti_enable(ExtiConfig config) {
+  (void)config; // ESP32-C3 GPIO interrupts handled by ESP-IDF
+}
+
+static inline void exti_disable(ExtiConfig config) {
+  (void)config; // ESP32-C3 GPIO interrupts handled by ESP-IDF
 }
 #endif
 

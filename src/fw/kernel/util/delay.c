@@ -23,6 +23,7 @@
 #define STM32F7_COMPATIBLE
 #define NRF5_COMPATIBLE
 #define SF32LB52_COMPATIBLE
+#define ESP32C3_COMPATIBLE
 #include <mcu.h>
 
 #include <inttypes.h>
@@ -46,6 +47,42 @@ void NOINLINE delay_us(uint32_t us) {
 }
 
 void delay_init(void) {
+}
+
+#elif defined(MICRO_FAMILY_ESP32C3)
+
+// ESP32-C3 delay implementation using RISC-V assembly
+// ESP32-C3 runs at 160MHz by default (CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ)
+static uint32_t s_loops_per_us = 0;
+
+void NOINLINE delay_us(uint32_t us) {
+  uint32_t delay_loops = us * s_loops_per_us;
+
+  // RISC-V delay loop: decrement counter and branch if not zero
+  // This loop takes approximately 1 cycle per iteration on ESP32-C3
+  // Using numeric labels (1:) for portability
+  __asm__ __volatile__ (
+      "1:                                    \n"
+      "  addi %0, %0, -1                     \n"
+      "  bnez %0, 1b                         \n"
+      : "+r" (delay_loops) // read-write operand (positional %0)
+      :
+      : "memory"
+       );
+}
+
+void delay_init(void) {
+  // ESP32-C3 default CPU frequency is 160MHz (from CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ)
+  // The delay loop takes approximately 1 cycle per iteration
+  // So: loops_per_us = frequency_mhz / cycles_per_loop
+  const uint32_t frequency_mhz = 160; // ESP32-C3 default
+  const uint32_t cycles_per_loop = 1; // RISC-V loop with addi + bnez typically takes 1 cycle
+  s_loops_per_us = frequency_mhz / cycles_per_loop;
+  
+  // Ensure we have at least 1 loop per microsecond
+  if (s_loops_per_us == 0) {
+    s_loops_per_us = 1;
+  }
 }
 
 #else

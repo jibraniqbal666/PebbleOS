@@ -69,8 +69,11 @@ def configure(conf):
     conf.env.append_value('LINKFLAGS', ['-Wl,--warn-common'])
 
     # RISC-V ESP32-C3 CPU flags
+    # rv32imc = 32-bit RISC-V with Integer, Multiply, Compressed extensions
+    # zicsr = Control and Status Register extension (required for csrr/csrw instructions)
+    # Note: ESP32-C3 supports zicsr, but we need to explicitly enable it in the architecture string
     args = [
-        '-march=rv32imc',
+        '-march=rv32imczicsr',  # Added zicsr extension for CSR instructions (mcycle, etc.)
         '-mabi=ilp32',
         '-ffreestanding',
         '-ffunction-sections',
@@ -82,7 +85,7 @@ def configure(conf):
         args += ['-g3', '-gdwarf-4']
 
     conf.env.append_value('CFLAGS', args)
-    conf.env.append_value('ASFLAGS', args)
+    conf.env.append_value('ASFLAGS', args)  # ASFLAGS also needs zicsr for inline assembly
     conf.env.append_value('LINKFLAGS', args)
 
     conf.env.SHLIB_MARKER = None

@@ -20,7 +20,18 @@
 #include "system/profiler.h"
 
 #define CMSIS_COMPATIBLE
+#define ESP32C3_COMPATIBLE
 #include <mcu.h>
+
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "riscv/csr.h"
+// RISC-V cycle counter (mcycle CSR)
+static inline uint32_t riscv_read_cycle_counter(void) {
+  uint32_t cycles;
+  __asm__ __volatile__ ("csrr %0, mcycle" : "=r" (cycles));
+  return cycles;
+}
+#endif
 
 
 // ------------------------------------------------------------------------------------
@@ -62,13 +73,21 @@ DEFINE_SYSCALL(void, sys_profiler_node_start, ProfilerNode *node) {
     }
   }
 
+#if defined(MICRO_FAMILY_ESP32C3)
+  node->start = riscv_read_cycle_counter();
+#else
   node->start = DWT->CYCCNT;
+#endif
 }
 
 DEFINE_SYSCALL(void, sys_profiler_node_stop, ProfilerNode *node) {
 
   // Capture the cycle count as soon as possible, before we validate the node argument
+#if defined(MICRO_FAMILY_ESP32C3)
+  uint32_t dwt_cyc_cnt = riscv_read_cycle_counter();
+#else
   uint32_t dwt_cyc_cnt = DWT->CYCCNT;
+#endif
 
   if (PRIVILEGE_WAS_ELEVATED) {
     if (!list_contains(g_profiler.nodes, (ListNode *)node)) {

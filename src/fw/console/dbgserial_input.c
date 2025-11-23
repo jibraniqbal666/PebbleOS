@@ -16,6 +16,7 @@
 
 #include "dbgserial_input.h"
 
+#define ESP32C3_COMPATIBLE
 #include "board/board.h"
 #include "drivers/dma.h"
 #include "drivers/exti.h"

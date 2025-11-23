@@ -24,6 +24,7 @@
 #include "util/string.h"
 
 #define CMSIS_COMPATIBLE
+#define ESP32C3_COMPATIBLE
 #include <mcu.h>
 
 #include <inttypes.h>
@@ -79,6 +80,13 @@ static void print_set_indexes(char buffer[80], const uint8_t *bitset, const Inde
 }
 
 void fault_handler_dump_cfsr(char buffer[80]) {
+#if defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3 (RISC-V) doesn't have ARM's SCB (System Control Block)
+  // RISC-V uses different fault handling mechanisms
+  // For now, provide a stub implementation
+  PBL_LOG_FROM_FAULT_HANDLER("CFSR (Configurable Fault) = N/A (RISC-V)");
+  return;
+#else
   // See http://infocenter.arm.com/help/topic/com.arm.doc.dui0552a/DUI0552A_cortex_m3_dgug.pdf for the register
   // definition.
 
@@ -136,6 +144,7 @@ void fault_handler_dump_cfsr(char buffer[80]) {
 
     print_set_indexes(buffer, &mmfsr, mmfsr_mappings, ARRAY_LENGTH(mmfsr_mappings));
   }
+#endif
 }
 
 void fault_handler_dump(char buffer[80], unsigned int *stacked_args) {
@@ -146,6 +155,20 @@ void fault_handler_dump(char buffer[80], unsigned int *stacked_args) {
 }
 
 static void hard_fault_handler_c(unsigned int* hardfault_args) {
+#if defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3 (RISC-V) doesn't have ARM's hard fault handler mechanism
+  // RISC-V uses different exception handling
+  // For now, provide a minimal implementation
+  char buffer[80];
+  PBL_LOG_FROM_FAULT_HANDLER("\r\n\r\n[Exception handler - RISC-V]");
+  PBL_LOG_FROM_FAULT_HANDLER("RISC-V exception occurred (not ARM hard fault)");
+  
+  // Set reboot reason
+  RebootReason reason = { .code = RebootReasonCode_HardFault, .extra = { .value = 0 } };
+  reboot_reason_set(&reason);
+  
+  reset_due_to_software_failure();
+#else
   // Log the lr instead of the pc. We frequently crash due to PC being madness. While the lr may be a little further
   // than the actual crash, it should give us enough context.
   const unsigned int stacked_lr = ((unsigned long) hardfault_args[5]);
@@ -170,9 +193,20 @@ static void hard_fault_handler_c(unsigned int* hardfault_args) {
   fault_handler_dump(buffer, hardfault_args);
 
   reset_due_to_software_failure();
+#endif
 }
 
 void HardFault_Handler(void) {
+#if defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3 (RISC-V) doesn't use ARM's HardFault_Handler
+  // RISC-V exceptions are handled differently
+  // This is a stub - actual exception handling will be implemented separately
+  char buffer[80];
+  PBL_LOG_FROM_FAULT_HANDLER("\r\n\r\n[RISC-V Exception Handler]");
+  RebootReason reason = { .code = RebootReasonCode_HardFault, .extra = { .value = 0 } };
+  reboot_reason_set(&reason);
+  reset_due_to_software_failure();
+#else
   // Grab the stack pointer, shove it into a register and call
   // the c function above.
   __asm("tst lr, #4\n"
@@ -180,4 +214,5 @@ void HardFault_Handler(void) {
         "mrseq r0, msp\n"
         "mrsne r0, psp\n"
         "b %0\n" :: "i" (hard_fault_handler_c));
+#endif
 }

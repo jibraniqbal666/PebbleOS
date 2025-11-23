@@ -18,6 +18,17 @@
 
 #include "wfi.h"
 
+#if defined(MICRO_FAMILY_ESP32C3)
+// RISC-V (ESP32-C3) implementation
+void NOINLINE NAKED_FUNC do_wfi(void) {
+  // RISC-V uses 'wfi' instruction and 'ret' to return
+  __asm volatile (
+      "wfi      \n"  // Wait for interrupt
+      "ret      \n"  // Return (RISC-V equivalent of bx lr)
+      );
+}
+#else
+// ARM implementation
 void NOINLINE NAKED_FUNC do_wfi(void) {
   // Work around a very strange bug in the STM32F where, upon waking from
   // STOP or SLEEP mode, the processor begins acting strangely depending on the
@@ -34,3 +45,4 @@ void NOINLINE NAKED_FUNC do_wfi(void) {
       "nop      \n"
       );
 }
+#endif

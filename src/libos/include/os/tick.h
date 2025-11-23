@@ -17,10 +17,8 @@
 #pragma once
 
 #if defined(MICRO_FAMILY_ESP32C3)
-// For ESP32-C3, include asm compatibility first, then ESP-IDF's portmacro.h
-// hal_esp32c3 directory is in include path, so include asm_compat.h directly
-#include "asm_compat.h"
-#include "freertos/portmacro.h"
+// For ESP32-C3, use our wrapper that provides parameterless macros
+#include "kernel/portmacro_esp32c3.h"
 #else
 #include "portmacro.h"
 #endif

@@ -18,12 +18,14 @@
 #include "kernel/core_dump.h"
 #include "kernel/logging_private.h"
 #include "kernel/pulse_logging.h"
+#include "mcu/interrupts.h"  // For mcu_state_disable_interrupts
 #include "system/bootbits.h"
 #include "system/passert.h"
 #include "system/reboot_reason.h"
 #include "system/reset.h"
 
 #define CMSIS_COMPATIBLE
+#define ESP32C3_COMPATIBLE
 #include <mcu.h>
 
 #if defined(NO_WATCHDOG)
@@ -40,7 +42,11 @@ NORETURN reset_due_to_software_failure(void) {
   // Don't reset right away, leave it in a state we can inspect
 
   enable_mcu_debugging();
+#if defined(MICRO_FAMILY_ESP32C3)
+  mcu_state_disable_interrupts();
+#else
   __disable_irq();
+#endif
   while (1) {
     continue;
   }

@@ -42,6 +42,7 @@
 #define STM32F7_COMPATIBLE
 #define NRF5_COMPATIBLE
 #define SF32LB52_COMPATIBLE
+#define ESP32C3_COMPATIBLE
 #include <mcu.h>
 
 #if defined(MICRO_FAMILY_NRF5)
@@ -87,14 +88,32 @@ static const RtcTicks MIN_STOP_TICKS = 5;
 static const RtcTicks EARLY_WAKEUP_TICKS = 4;
 //! Stop mode until this number of ticks before the next scheduled task
 static const RtcTicks MIN_STOP_TICKS = 8;
+#elif defined(MICRO_FAMILY_ESP32C3)
+// ESP32-C3: Minimal stop mode support (not yet fully implemented)
+//! Stop mode until this number of ticks before the next scheduled task
+static const RtcTicks EARLY_WAKEUP_TICKS __attribute__((unused)) = 4;
+//! Stop mode until this number of ticks before the next scheduled task
+static const RtcTicks MIN_STOP_TICKS __attribute__((unused)) = 8;
+// 1 second ticks so that we only wake up once every regular timer interval.
+static const RtcTicks MAX_STOP_TICKS __attribute__((unused)) = RTC_TICKS_HZ;
 #else
 #error "Unknown micro family"
 #endif
 
+#if !defined(MICRO_FAMILY_ESP32C3)
 // 1 second ticks so that we only wake up once every regular timer interval.
 static const RtcTicks MAX_STOP_TICKS = RTC_TICKS_HZ;
+#endif
 
-#if !defined(MICRO_FAMILY_SF32LB52)
+#if defined(MICRO_FAMILY_ESP32C3)
+// ESP32-C3 stub implementation - sleep mode not yet fully implemented
+extern void vPortSuppressTicksAndSleep( TickType_t xExpectedIdleTime ) {
+  // For ESP32-C3, sleep mode is not yet implemented
+  // Just return without sleeping - FreeRTOS will handle the idle loop
+  (void)xExpectedIdleTime;
+  return;
+}
+#elif !defined(MICRO_FAMILY_SF32LB52)
 extern void vPortSuppressTicksAndSleep( TickType_t xExpectedIdleTime ) {
   if (!rtc_alarm_is_initialized() || !sleep_mode_is_allowed()) {
     // the RTC is not yet initialized to the point where it can wake us from sleep or sleep/stop
@@ -172,6 +191,9 @@ extern void vPortSuppressTicksAndSleep( TickType_t xExpectedIdleTime ) {
         rtc_end += 0x1000000;
       uint32_t rtc_elapsed = rtc_end - rtc_start;
       uint32_t cycles_elapsed = rtc_elapsed * SystemCoreClock / 32768;
+#elif defined(MICRO_FAMILY_ESP32C3)
+      // ESP32-C3: Sleep mode not yet implemented, no cycle counting
+      uint32_t cycles_elapsed = 0;
 #else
       uint32_t systick_stop = SysTick->VAL;
       uint32_t cycles_elapsed;
@@ -214,7 +236,9 @@ extern void vPortSuppressTicksAndSleep( TickType_t xExpectedIdleTime ) {
   NRF_NVMC->ICACHECNF |= NVMC_ICACHECNF_CACHEEN_Msk;
 #endif
 
+#if !defined(MICRO_FAMILY_ESP32C3)
   __enable_irq();
+#endif
 }
 
 #else

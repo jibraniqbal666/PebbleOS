@@ -17,7 +17,14 @@
 #include "interval_timer.h"
 
 #include "drivers/rtc.h"
+#include "system/passert.h"  // For PBL_ASSERTN
+
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "kernel/portmacro_esp32c3.h"
+#else
 #include "FreeRTOS.h"
+#include "portmacro.h"
+#endif
 
 static uint64_t prv_get_curr_system_time_ms(void) {
   time_t time_s;

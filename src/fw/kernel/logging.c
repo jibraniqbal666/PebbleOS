@@ -24,6 +24,12 @@
 #include "console/prompt.h"
 #include "console/serial_console.h"
 #include "debug/advanced_logging.h"
+
+#if defined(MICRO_FAMILY_ESP32C3)
+// Include PebbleOS time.h before rtc.h to avoid conflicts with ESP-IDF's time.h
+#include "util/time/time.h"
+#endif
+
 #include "drivers/rtc.h"
 #include "system/logging.h"
 
@@ -37,9 +43,15 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "kernel/portmacro_esp32c3.h"
+#else
+#include "portmacro.h"
+#include <time.h>
+#endif
+
 #include <ctype.h>
 #include <stdio.h>
-#include <time.h>
 
 #ifndef PBL_LOG_LEVEL
   #define PBL_LOG_LEVEL LOG_LEVEL_DEBUG

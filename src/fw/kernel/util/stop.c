@@ -34,6 +34,7 @@
 #define STM32F7_COMPATIBLE
 #define NRF5_COMPATIBLE
 #define SF32LB52_COMPATIBLE
+#define ESP32C3_COMPATIBLE
 #include <mcu.h>
 
 #include <stdbool.h>
@@ -161,6 +162,14 @@ void enter_stop_mode(void) {
   HAL_Delay_us(0);
 
   restore_interrupt_setting();
+}
+#elif defined(MICRO_FAMILY_ESP32C3)
+// ESP32-C3 stop mode stub - not yet implemented
+void enter_stop_mode(void) {
+  // ESP32-C3 stop mode is not yet implemented
+  // For now, just return without entering stop mode
+  // TODO: Implement ESP32-C3 light sleep/deep sleep modes
+  return;
 }
 #else /* STM32 */
 void enter_stop_mode(void) {

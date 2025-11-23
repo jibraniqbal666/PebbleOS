@@ -25,23 +25,32 @@
 #define STM32F7_COMPATIBLE
 #define NRF5_COMPATIBLE
 #define SF32LB52_COMPATIBLE
+#define ESP32C3_COMPATIBLE
 #include <mcu.h>
 
 void enable_mcu_debugging(void) {
-#if !defined(RELEASE) && !defined(MICRO_FAMILY_NRF52840) && !defined(MICRO_FAMILY_SF32LB52)
+#if !defined(RELEASE) && !defined(MICRO_FAMILY_NRF52840) && !defined(MICRO_FAMILY_SF32LB52) && !defined(MICRO_FAMILY_ESP32C3)
   DBGMCU_Config(DBGMCU_SLEEP | DBGMCU_STOP, ENABLE);
   // Stop RTC, IWDG & TIM2 during debugging
   // Note: TIM2 is used by the task watchdog
   DBGMCU_APB1PeriphConfig(DBGMCU_RTC_STOP | DBGMCU_TIM2_STOP | DBGMCU_IWDG_STOP,
                           ENABLE);
+#elif defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3 doesn't have DBGMCU (ARM-specific debug unit)
+  // Debugging is handled by ESP-IDF's debug infrastructure
+  // No-op for ESP32-C3
 #endif
 }
 
 void disable_mcu_debugging(void) {
-#if !defined(RELEASE) && !defined(MICRO_FAMILY_NRF52840) && !defined(MICRO_FAMILY_SF32LB52)
+#if !defined(RELEASE) && !defined(MICRO_FAMILY_NRF52840) && !defined(MICRO_FAMILY_SF32LB52) && !defined(MICRO_FAMILY_ESP32C3)
   DBGMCU->CR = 0;
   DBGMCU->APB1FZ = 0;
   DBGMCU->APB2FZ = 0;
+#elif defined(MICRO_FAMILY_ESP32C3)
+  // ESP32-C3 doesn't have DBGMCU (ARM-specific debug unit)
+  // Debugging is handled by ESP-IDF's debug infrastructure
+  // No-op for ESP32-C3
 #endif
 }
 

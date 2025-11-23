@@ -87,6 +87,8 @@ def build(bld):
                 excludes.append('common/shared_prf_storage/shared_prf_storage_debug.c')
                 # Exclude battery voltage curve (not yet implemented for ESP32-C3)
                 excludes.append('common/battery/voltage/**')
+                # Exclude weather service (not yet implemented for ESP32-C3)
+                excludes.append('normal/weather/**')
 
             return excludes
 

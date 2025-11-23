@@ -243,3 +243,11 @@ static const BoardConfigSharpDisplay BOARD_CONFIG_DISPLAY = {
 
 void board_early_init(void);
 void board_init(void);
+
+// UART device declarations
+#if defined(MICRO_FAMILY_ESP32C3)
+// Forward declare UARTDevice to avoid circular dependency
+// (uart.h includes board.h, so we can't include uart.h here)
+typedef const struct UARTDevice UARTDevice;
+extern UARTDevice * const DBG_UART;
+#endif

@@ -16,6 +16,7 @@
 
 #include "dbgserial.h"
 
+#define ESP32C3_COMPATIBLE
 #include "board/board.h"
 #include "drivers/uart.h"
 
