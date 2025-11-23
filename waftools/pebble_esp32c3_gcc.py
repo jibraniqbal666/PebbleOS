@@ -26,6 +26,10 @@ def configure(conf):
     conf.env.AR = CROSS_COMPILE_PREFIX + 'gcc-ar'
     conf.env.CC = CROSS_COMPILE_PREFIX + 'gcc'
     conf.env.LINK_CC = conf.env.CC
+    
+    # Set GCC target architecture to ensure it passes correct flags to assembler for inline assembly
+    # This is important for CSR instructions that require zicsr extension
+    conf.env.append_value('CFLAGS', ['-march=rv32imczicsr'])
 
     conf.find_program('ccache', var='CCACHE', mandatory=False)
     if conf.env.CCACHE:
@@ -63,11 +67,6 @@ def configure(conf):
 
     conf.add_platform_defines(conf.env)
 
-    conf.env.ASFLAGS = ['-xassembler-with-cpp', '-c']
-    conf.env.AS_TGT_F = '-o'
-
-    conf.env.append_value('LINKFLAGS', ['-Wl,--warn-common'])
-
     # RISC-V ESP32-C3 CPU flags
     # rv32imc = 32-bit RISC-V with Integer, Multiply, Compressed extensions
     # zicsr = Control and Status Register extension (required for csrr/csrw instructions)
@@ -84,8 +83,24 @@ def configure(conf):
     if not conf.options.no_debug:
         args += ['-g3', '-gdwarf-4']
 
+    # Set ASFLAGS first with architecture flags, then add assembler-specific flags
+    # This ensures the assembler knows about zicsr extension when processing inline assembly
+    conf.env.ASFLAGS = ['-xassembler-with-cpp', '-c'] + args
+    conf.env.AS_TGT_F = '-o'
+
+    conf.env.append_value('LINKFLAGS', ['-Wl,--warn-common'])
+
+    # Add architecture flags to CFLAGS
+    # GCC should automatically pass -march to the assembler when processing inline assembly,
+    # but we also explicitly pass it via -Wa to ensure the assembler recognizes zicsr extension
+    # IMPORTANT: The -Wa flag must come AFTER -march in CFLAGS for proper processing
     conf.env.append_value('CFLAGS', args)
-    conf.env.append_value('ASFLAGS', args)  # ASFLAGS also needs zicsr for inline assembly
+    # Pass architecture to assembler explicitly for inline assembly processing
+    # The assembler needs to know about zicsr extension for CSR instructions in ESP-IDF headers
+    # Use -Wa to pass flags directly to the assembler
+    # Note: Multiple -Wa flags can be combined: -Wa,flag1,flag2
+    conf.env.append_value('CFLAGS', ['-Wa,-march=rv32imczicsr'])
+    # ASFLAGS already set above with architecture flags
     conf.env.append_value('LINKFLAGS', args)
 
     conf.env.SHLIB_MARKER = None

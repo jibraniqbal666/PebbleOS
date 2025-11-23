@@ -611,9 +611,10 @@ def _build_recovery(bld):
                 'process_management/app_menu_data_source.c',
                 'resource/resource_storage_file.c']
 
-    # Exclude ARM-specific core dump for ESP32-C3
+    # Exclude ARM-specific files for ESP32-C3
     if bld.is_esp32c3():
         excludes.append('kernel/core_dump.c')
+        excludes.append('vector_table.c')  # ESP32-C3 uses ESP-IDF's interrupt handling
 
     if 'MFG_INFO_RECORDS_TEST_RESULTS' not in bld.env.DEFINES:
         excludes.extend('mfg/results_ui.c')
@@ -637,7 +638,11 @@ def _build_recovery(bld):
 
     sources = sum([bld.path.ant_glob('%s/*.c' % d, excl=excludes) for d in source_dirs], [])
     sources.extend(_get_comm_sources(bld, True))
-    sources.extend(bld.path.ant_glob('*.c'))
+    # Exclude ARM-specific files from root-level glob for ESP32-C3
+    root_excludes = excludes[:]  # Copy excludes list
+    if bld.is_esp32c3():
+        root_excludes.append('vector_table.c')  # Ensure it's excluded from root glob too
+    sources.extend(bld.path.ant_glob('*.c', excl=root_excludes))
     sources.extend(bld.path.ant_glob('*.[sS]'))
 
     sources.append(bld.path.make_node('popups/bluetooth_pairing_ui.c'))
@@ -749,9 +754,10 @@ def _build_normal(bld):
 
     excludes.extend(_get_launcher_globs_to_exclude(bld))
 
-    # Exclude ARM-specific core dump for ESP32-C3
+    # Exclude ARM-specific files for ESP32-C3
     if bld.is_esp32c3():
         excludes.append('kernel/core_dump.c')
+        excludes.append('vector_table.c')  # ESP32-C3 uses ESP-IDF's interrupt handling
 
     if not bld.capability('HAS_BUILTIN_HRM'):
         excludes.append('popups/ble_hrm/**')
@@ -765,7 +771,11 @@ def _build_normal(bld):
     sources = sum([bld.path.ant_glob('%s/*.c' % d, excl=excludes) for d in source_dirs], [])
     sources.extend(bld.path.make_node(x) for x in source_files)
     sources.extend(_get_comm_sources(bld, False))
-    sources.extend(bld.path.ant_glob('*.c'))
+    # Exclude ARM-specific files from root-level glob for ESP32-C3
+    root_excludes = excludes[:]  # Copy excludes list
+    if bld.is_esp32c3():
+        root_excludes.append('vector_table.c')  # Ensure it's excluded from root glob too
+    sources.extend(bld.path.ant_glob('*.c', excl=root_excludes))
     sources.extend(bld.path.ant_glob('*.[sS]'))
 
     if bld.env.NORMAL_SHELL == 'sdk':

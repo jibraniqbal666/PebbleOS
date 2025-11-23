@@ -61,9 +61,16 @@ Profiler g_profiler;
 #define PROFILER_NODE(name) ProfilerNode g_profiler_node_##name = {.module_name = #name};
 #include "profiler_list.h"
 #undef PROFILER_NODE
-#if PROFILE_INTERRUPTS
+#if PROFILE_INTERRUPTS && !defined(MICRO_FAMILY_ESP32C3)
+// ESP32-C3 uses ESP-IDF's interrupt handling, so we don't need IRQ profiling nodes
 #define IRQ_DEF(idx, irq) ProfilerNode g_profiler_node_##irq##_IRQ = {.module_name = #irq"_IRQ"};
+#if defined(MICRO_FAMILY_NRF52840)
+#include "irq_nrf52840.def"
+#elif defined(MICRO_FAMILY_SF32LB52)
+#include "irq_sf32lb52.def"
+#else
 #include "irq_stm32.def"
+#endif
 #undef IRQ_DEF
 #endif
 
@@ -71,9 +78,16 @@ static ProfilerNode *s_profiler_nodes[] = {
 #define PROFILER_NODE(name) &g_profiler_node_##name,
 #include "profiler_list.h"
 #undef PROFILER_NODE
-#if PROFILE_INTERRUPTS
+#if PROFILE_INTERRUPTS && !defined(MICRO_FAMILY_ESP32C3)
+// ESP32-C3 uses ESP-IDF's interrupt handling, so we don't need IRQ profiling nodes
 #define IRQ_DEF(idx, irq) &g_profiler_node_##irq##_IRQ,
+#if defined(MICRO_FAMILY_NRF52840)
+#include "irq_nrf52840.def"
+#elif defined(MICRO_FAMILY_SF32LB52)
+#include "irq_sf32lb52.def"
+#else
 #include "irq_stm32.def"
+#endif
 #undef IRQ_DEF
 #endif
 };
