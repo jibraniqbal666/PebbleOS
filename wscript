@@ -57,6 +57,7 @@ RUNNERS = {
     'obelix_pvt': ['sftool'],
     'obelix_bb': ['sftool'],
     'obelix_bb2': ['sftool'],
+    'esp32c3': ['esptool'],
 }
 
 def truncate(msg):
@@ -123,7 +124,8 @@ def options(opt):
                              'obelix_pvt',
                              'obelix_bb',
                              'obelix_bb2',
-                            ],
+                             'esp32c3',
+                             ],
                    help='Which board we are targeting '
                         'bb2, snowy_dvt, spalding, silk...')
     opt.add_option('--runner', default=None, choices=['openocd', 'sftool', 'nrfutil'],
@@ -520,6 +522,9 @@ def configure(conf):
     elif conf.is_asterix() or conf.options.board == 'silk_flint':
         conf.env.PLATFORM_NAME = 'flint'
         conf.env.MIN_SDK_VERSION = 2
+    elif conf.is_esp32c3():
+        conf.env.PLATFORM_NAME = 'esp32c3'
+        conf.env.MIN_SDK_VERSION = 2
     else:
         conf.fatal('No platform specified for {}!'.format(conf.options.board))
 
@@ -536,6 +541,8 @@ def configure(conf):
         conf.env.MICRO_FAMILY = 'NRF52840'
     elif conf.is_obelix():
         conf.env.MICRO_FAMILY = 'SF32LB52'
+    elif conf.is_esp32c3():
+        conf.env.MICRO_FAMILY = 'ESP32C3'
     else:
         conf.fatal('No micro family specified for {}!'.format(conf.options.board))
 
@@ -598,9 +605,12 @@ def configure(conf):
 
     conf.recurse('src/bluetooth-fw')
 
-    Logs.pprint('CYAN', 'Configuring arm_firmware environment')
+    Logs.pprint('CYAN', 'Configuring firmware environment')
     conf.setenv('', base_env)
-    conf.load('pebble_arm_gcc', tooldir='waftools')
+    if conf.is_esp32c3():
+        conf.load('pebble_esp32c3_gcc', tooldir='waftools')
+    else:
+        conf.load('pebble_arm_gcc', tooldir='waftools')
 
     conf.setenv('arm_prf_mode', env=conf.env)
     conf.env.append_value('DEFINES', ['RECOVERY_FW'])

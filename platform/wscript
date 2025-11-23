@@ -68,6 +68,10 @@ def is_obelix_bb2(ctx):
     return ctx.get_board() == 'obelix_bb2'
 
 @conf
+def is_esp32c3(ctx):
+    return ctx.get_board().startswith('esp32c3')
+
+@conf
 def get_platform_name(ctx):
     if is_tintin(ctx):
         return "tintin"
@@ -87,6 +91,8 @@ def get_platform_name(ctx):
         return "asterix"
     elif is_obelix(ctx):
         return "obelix"
+    elif is_esp32c3(ctx):
+        return "esp32c3"
     else:
         return "unknown"
 
@@ -137,6 +143,8 @@ def get_qemu_cpu(ctx):
         return 'cortex-m4'
     elif is_obelix(ctx):
         return 'cortex-star-mc1'
+    elif is_esp32c3(ctx):
+        return 'riscv32'
     else:
         return 'unknown'
 
@@ -233,16 +241,24 @@ def add_platform_defines(ctx, env):
     elif ctx.is_obelix():
         bit_depth = 8
         platform = 'OBELIX'
+    elif ctx.is_esp32c3():
+        bit_depth = 1  # Default, can be adjusted based on display
+        platform = 'ESP32C3'
     else:
         ctx.fatal('No platform specified for {}!'.format(ctx.options.board))
 
-    env.append_value(
-        'DEFINES', ['USE_STDPERIPH_DRIVER=1',
-                    'BOARD_{}=1'.format(ctx.options.board.upper()),
-                    'PLATFORM_{}=1'.format(platform),
-                    'MICRO_FAMILY_{}=1'.format(env.MICRO_FAMILY),
-                    'SCREEN_COLOR_DEPTH_BITS={}'.format(bit_depth),
-                    'MIN_SDK_VERSION={}'.format(env.MIN_SDK_VERSION)])
+    defines = [
+        'BOARD_{}=1'.format(ctx.options.board.upper()),
+        'PLATFORM_{}=1'.format(platform),
+        'MICRO_FAMILY_{}=1'.format(env.MICRO_FAMILY),
+        'SCREEN_COLOR_DEPTH_BITS={}'.format(bit_depth),
+        'MIN_SDK_VERSION={}'.format(env.MIN_SDK_VERSION)]
+    
+    # Only add USE_STDPERIPH_DRIVER for STM32 platforms
+    if not is_esp32c3(ctx):
+        defines.append('USE_STDPERIPH_DRIVER=1')
+    
+    env.append_value('DEFINES', defines)
     if 'NRF5' in env.MICRO_FAMILY:
         env.append_value('DEFINES', 'MICRO_FAMILY_NRF5=1')
 

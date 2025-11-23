@@ -120,6 +120,24 @@ flint_platform = {
     "TAGS": ["flint", "bw", "rect", "mic", "health", "compass", "144w", "168h"],
 }
 
+esp32c3_platform = {
+    "NAME": "esp32c3",
+    "MAX_APP_BINARY_SIZE": 0x10000,  # 64K
+    "MAX_APP_MEMORY_SIZE": 0x10000,  # 64K
+    "MAX_WORKER_MEMORY_SIZE": 0x2800,  # 10K
+    "MAX_RESOURCES_SIZE_APPSTORE": 0x40000,  # 256K
+    "MAX_RESOURCES_SIZE": 0x100000,  # 1024K
+    "DEFINES": ["PBL_PLATFORM_ESP32C3", "PBL_COLOR", "PBL_RECT",
+                "PBL_MICROPHONE", "PBL_SMARTSTRAP", "PBL_HEALTH",
+                "PBL_SMARTSTRAP_POWER", "PBL_COMPASS",
+                "PBL_DISPLAY_WIDTH=200", "PBL_DISPLAY_HEIGHT=228"],
+    "BUILD_DIR": "esp32c3",
+    "BUNDLE_BIN_DIR": "esp32c3",
+    "ADDITIONAL_TEXT_LINES_FOR_PEBBLE_H": [],
+    "MAX_FONT_GLYPH_SIZE": 256,
+    "TAGS": ["esp32c3", "color", "rect", "mic", "strap", "health", "strappower",
+             "compass", "200w", "228h"]
+}
 
 pebble_platforms = {
     "flint": flint_platform,
@@ -128,6 +146,7 @@ pebble_platforms = {
     "chalk": chalk_platform,
     "basalt": basalt_platform,
     "aplite": aplite_platform,
+    "esp32c3": esp32c3_platform,
 }
 
 

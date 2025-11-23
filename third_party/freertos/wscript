@@ -1,5 +1,36 @@
 def build(bld):
     # FreeRTOS vendor code
+    if bld.env.MICRO_FAMILY == 'ESP32C3':
+        # ESP32-C3 uses ESP-IDF's FreeRTOS, not standalone FreeRTOS
+        # ESP-IDF includes FreeRTOS in its components
+        import os
+        esp_idf_path = os.environ.get('ESP_IDF_PATH', '/Users/jibraniqbal/AndroidStudioProjects/pebble-next/esp-idf')
+        
+        # ESP-IDF FreeRTOS include paths
+        freertos_includes = [
+            '.',
+            esp_idf_path + '/components/freertos/FreeRTOS-Kernel/include',
+            esp_idf_path + '/components/freertos/FreeRTOS-Kernel/portable/riscv/include',
+            esp_idf_path + '/components/freertos/include',
+            esp_idf_path + '/components/freertos/esp_additions/include',
+        ]
+        
+        freertos_defines = [
+            'FREERTOS_CONFIG_H',  # ESP-IDF uses its own config
+        ]
+        
+        # Export includes and defines for ESP-IDF FreeRTOS
+        # Note: We don't build a static library here because ESP-IDF
+        # provides FreeRTOS as part of its build system
+        bld(export_includes=freertos_includes,
+            export_defines=freertos_defines,
+            name='freertos_includes')
+        
+        # Create a dummy target so dependencies don't break
+        # ESP-IDF will link FreeRTOS automatically
+        bld(name='freertos_esp32c3_stub')
+        return
+    
     if bld.env.MICRO_FAMILY == 'STM32F2':
         freertos_port_name = 'ARM_CM3'
     elif bld.env.MICRO_FAMILY == 'STM32F4':

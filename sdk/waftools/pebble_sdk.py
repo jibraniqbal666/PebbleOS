@@ -297,9 +297,14 @@ def build(bld):
             # Check for rocky script (This is done in `build` to preserve the script as a node
             # instead of as an absolute path as would be required in `configure`. This is to keep
             # the signatures the same for both FW builds and SDK builds.
-            if not bld.env.JS_TOOLING_SCRIPT:
+            js_tooling_script = bld.env.JS_TOOLING_SCRIPT
+            # Handle case where JS_TOOLING_SCRIPT might be a list (from multiple platforms)
+            if isinstance(js_tooling_script, list):
+                js_tooling_script = js_tooling_script[0] if js_tooling_script else None
+            if not js_tooling_script:
                 bld.fatal("Unable to locate tooling for this Rocky.js app build. Please "
                           "try re-installing this version of the SDK.")
+            bld.env.JS_TOOLING_SCRIPT = js_tooling_script
             bld.pbl_build(source=[rocky_c_file],
                           target=build_node.make_node("pebble-app.elf"),
                           bin_type='rocky')

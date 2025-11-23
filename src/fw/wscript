@@ -121,6 +121,10 @@ def _generate_memory_layout(bld):
         ldscript_template = bld.path.find_node('nrf52840_flash_fw.ld.template')
     elif bld.is_obelix():
         ldscript_template = bld.path.find_node('sf32lb52_flash_fw.ld.template')
+    elif bld.is_esp32c3():
+        # ESP32-C3 linker script - will need to create this template
+        # For now, use a placeholder or create a minimal one
+        ldscript_template = bld.path.find_node('esp32c3_flash_fw.ld.template')
 
     # Determine sizes so we can later calculate FLASH_LENGTH_*
     if bld.env.MICRO_FAMILY == 'STM32F2':
@@ -175,6 +179,15 @@ def _generate_memory_layout(bld):
         else:
             fw_max_size = flash_size
 
+    elif bld.env.MICRO_FAMILY == 'ESP32C3':
+        # ESP32-C3 memory layout
+        # Bootloader is typically at 0x0, size 32KB (0x8000)
+        # Firmware starts at 0x8000 (32KB)
+        # ESP32-C3 typically has 4MB flash, but can vary
+        offset_size = 32 * 1024  # Bootloader size
+        flash_size = 4 * 1024 * 1024  # 4MB flash (typical for ESP32-C3)
+        fw_max_size = flash_size - offset_size  # Available space after bootloader
+
     if bld.env.QEMU:
         flash_size = 4 * 1024 * 1024
         fw_max_size = flash_size
@@ -185,6 +198,10 @@ def _generate_memory_layout(bld):
         flash_origin = 0x00000000
     elif bld.env.MICRO_FAMILY == 'SF32LB52':
         flash_origin = 0x12000000
+    elif bld.env.MICRO_FAMILY == 'ESP32C3':
+        # ESP32-C3 flash is memory-mapped starting at 0x42000000
+        # But for firmware, we use the direct flash address (0x0)
+        flash_origin = 0x0
     else:
         flash_origin = 0x08000000
 
@@ -301,6 +318,15 @@ def _generate_memory_layout(bld):
         # FIXME(SF32LB52): due to MPU find_subregions_for_region assuming
         # ARMv7 subregion limitations, we need to reserve 32K!
         total_ram = (0x20000000, (512 - 32) * 1024)
+    elif bld.is_esp32c3():
+        # ESP32-C3 has 400KB SRAM starting at 0x3FC80000
+        # For minimal bootloader support, use basic RAM allocation
+        app_ram_size_2x = APP_RAM_SIZES['aplite']
+        app_ram_size_3x = APP_RAM_SIZES['aplite']
+        app_ram_size_4x = APP_RAM_SIZES['aplite']  # Start with minimal support
+        # ESP32-C3 SRAM: 400KB total, reserve some for ESP-IDF
+        # Use 0x3FC80000 as base (ESP32-C3 SRAM start)
+        total_ram = (0x3FC80000, 400 * 1024)
     else:
         bld.fatal("No set of supported SDK platforms defined for this board")
 
@@ -340,8 +366,17 @@ def _generate_memory_layout(bld):
         FLASH_SIZE=flash_size,
         BOOTLOADER_SYMBOLS=bootloader_symbol_definitions)
 
-    app_mpu_region = tools.mpu_calc.find_subregions_for_region(app_ram[0], app_ram[1])
-    worker_mpu_region = tools.mpu_calc.find_subregions_for_region(worker_ram[0], worker_ram[1])
+    # ESP32-C3 is RISC-V and doesn't have ARM-style MPU
+    # Create dummy MPU regions that match the actual RAM regions
+    if bld.is_esp32c3():
+        # For RISC-V, we don't need MPU subregion calculation
+        # Just use the RAM regions directly as "MPU regions"
+        from tools.mpu_calc import MpuRegion
+        app_mpu_region = MpuRegion(app_ram[0], app_ram[1], 0)
+        worker_mpu_region = MpuRegion(worker_ram[0], worker_ram[1], 0)
+    else:
+        app_mpu_region = tools.mpu_calc.find_subregions_for_region(app_ram[0], app_ram[1])
+        worker_mpu_region = tools.mpu_calc.find_subregions_for_region(worker_ram[0], worker_ram[1])
 
     bld(features='subst',
         source=bld.path.find_node('kernel/mpu_regions.template.h'),
@@ -482,6 +517,9 @@ def _get_mfg_paths(bld):
         return ('mfg/asterix',)
     elif bld.is_obelix():
         return ('mfg/obelix',)
+    elif bld.is_esp32c3():
+        # ESP32-C3 manufacturing support - minimal for now
+        return ('mfg/esp32c3',)
     else:
         bld.fatal('No MFG configuration for board %s' % bld.env.BOARD)
 

@@ -357,6 +357,14 @@ board_capability_dicts = [
             'HAS_DYNAMIC_BACKLIGHT',
         },
     },
+    {
+        'boards': [ 'esp32c3' ],
+        'capabilities':
+        {
+            # Minimal capabilities for bootloader-only support
+            'HAS_PBLBOOT',
+        },
+    },
 ]
 
 # Run through again and make sure all sets include only valid keys defined in

@@ -21,6 +21,7 @@
 #define STM32F7_COMPATIBLE
 #define NRF52840_COMPATIBLE
 #define SF32LB52_COMPATIBLE
+#define ESP32C3_COMPATIBLE
 #include <mcu.h>
 
 #if defined(MICRO_FAMILY_STM32F2)
@@ -33,6 +34,8 @@
 # include "board_nrf5.h"
 #elif defined(MICRO_FAMILY_SF32LB52)
 # include "board_sf32lb52.h"
+#elif defined(MICRO_FAMILY_ESP32C3)
+# include "boards/board_esp32c3.h"
 #elif !defined(SDK) && !defined(UNITTEST)
 # error "Unknown or missing MICRO_FAMILY_* define"
 #endif

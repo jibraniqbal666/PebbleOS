@@ -1,5 +1,5 @@
 mcu_family = bld.env.MICRO_FAMILY
-if mcu_family not in ('STM32F2', 'STM32F4', 'STM32F7', 'NRF52840', 'SF32LB52'):
+if mcu_family not in ('STM32F2', 'STM32F4', 'STM32F7', 'NRF52840', 'SF32LB52', 'ESP32C3'):
     bld.fatal('src/fw/drivers/wscript: '
               'Unknown MICRO_FAMILY {}'.format(mcu_family))
 
@@ -238,6 +238,20 @@ elif bld.is_obelix():
             'driver_mic',
             'driver_touch',
             'driver_audio',
+        ],
+    )
+elif bld.is_esp32c3():
+    # ESP32-C3 minimal driver setup for bootloader/firmware
+    # Most drivers will use ESP-IDF APIs, so we only include minimal stubs
+    # Note: This is minimal support - full driver implementations will be added later
+    bld(
+        name='drivers',
+        use=[
+            # Minimal drivers - ESP-IDF provides most functionality
+            'driver_mcu',
+            'driver_uart',
+            'driver_flash',
+            'driver_gpio_defaults',  # Needed by some drivers
         ],
     )
 ## ----------
@@ -812,6 +826,24 @@ elif bld.is_obelix():
             'root_includes',
         ],
     )
+elif bld.is_esp32c3():
+    # ESP32-C3 flash driver - uses ESP-IDF SPI flash API
+    # For now, use minimal flash implementation
+    # TODO: Implement ESP32-C3 flash driver using ESP-IDF APIs
+    bld.objects(
+        name='driver_flash',
+        source=[
+            'flash/flash_api.c',
+            'flash/flash_crc.c',
+            'flash/flash_erase.c',
+            'flash/cd_flash_driver.c',
+        ],
+        use=[
+            'freertos',
+            'fw_includes',
+            'root_includes',
+        ],
+    )
 
 if bld.is_snowy_compatible():
     bld.objects(
@@ -895,7 +927,7 @@ elif mcu_family == 'STM32F2':
             'root_includes',
         ],
     )
-elif mcu_family in ('NRF52840', 'SF32LB52'):
+elif mcu_family in ('NRF52840', 'SF32LB52', 'ESP32C3'):
     bld.objects(
         name='driver_pwr',
         source=[
@@ -927,7 +959,7 @@ elif mcu_family in ('STM32F4', 'STM32F7'):
             'driver_gpio',
         ],
     )
-elif mcu_family in ('NRF52840', 'SF32LB52'):
+elif mcu_family in ('NRF52840', 'SF32LB52', 'ESP32C3'):
     bld.objects(
         name='driver_gpio_defaults',
         source=[
@@ -1218,6 +1250,17 @@ elif mcu_family == 'SF32LB52':
         use=[
             'fw_includes',
             'hal_sifli',
+        ],
+    )
+elif mcu_family == 'ESP32C3':
+    # ESP32-C3 MCU driver - uses ESP-IDF APIs
+    bld.objects(
+        name='driver_mcu',
+        source=[
+            'stubs/mcu.c',  # Use stub for now, will be replaced with ESP32-C3 implementation
+        ],
+        use=[
+            'fw_includes',
         ],
     )
 
@@ -1849,6 +1892,19 @@ elif mcu_family == 'SF32LB52':
             'fw_includes',
             'root_includes',
             'hal_sifli',
+        ],
+    )
+elif mcu_family == 'ESP32C3':
+    # ESP32-C3 UART driver - uses ESP-IDF UART driver
+    bld.objects(
+        name='driver_uart',
+        source=[
+            'stubs/uart.c',  # Stub for now, will use ESP-IDF UART driver
+        ],
+        use=[
+            'freertos',
+            'fw_includes',
+            'root_includes',
         ],
     )
 

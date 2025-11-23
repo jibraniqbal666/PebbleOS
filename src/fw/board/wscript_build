@@ -111,6 +111,20 @@ elif board in ('obelix_evt', 'obelix_dvt', 'obelix_pvt', 'obelix_bb', 'obelix_bb
             'drivers',
         ],
     )
+elif board in ('esp32c3'):
+    # ESP32-C3 board configuration
+    # For minimal bootloader support, we'll create a minimal board file
+    bld.objects(
+        name='board',
+        source=[
+            'boards/board_esp32c3.c',
+        ],
+        use=[
+            'fw_includes',
+            'freertos',
+            'drivers',
+        ],
+    )
 else:
     bld.fatal('src/fw/board/wscript_build: '
               'Unknown board {}'.format(board))

@@ -61,6 +61,12 @@
 #  error "Source is incompatible with the target MCU"
 # endif
 # include <bf0_hal.h>
+#elif defined(MICRO_FAMILY_ESP32C3)
+# if !defined(ESP32C3_COMPATIBLE) && !defined(CMSIS_COMPATIBLE)
+#  error "Source is incompatible with the target MCU"
+# endif
+# // ESP32-C3 uses ESP-IDF headers - no specific MCU header needed here
+# include <stdint.h>
 #elif !defined(SDK) && !defined(UNITTEST)
 # error "Unknown or missing MICRO_FAMILY_* define"
 #endif

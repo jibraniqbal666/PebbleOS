@@ -13,6 +13,11 @@ elif bld.is_asterix():
     sources.append(bld.path.make_node("startup_stm32.c")) # good enough
 elif bld.is_obelix():
     sources.append(bld.path.make_node("startup_sf32lb52.c"))
+elif bld.is_esp32c3():
+    # ESP32-C3 uses ESP-IDF's startup and clock configuration
+    # ESP-IDF handles system initialization, so we don't need to add startup files here
+    # The firmware will link against ESP-IDF which provides startup code
+    pass
 else:
     bld.fatal("No clock configuration file specified for this platform")
     
