@@ -402,7 +402,7 @@ static bool prv_app_start(const PebbleProcessMd *app_md, const void *args,
       (app_md->process_storage == ProcessStorageFlash) ?
           process_metadata_get_code_bank_num(app_md) : SYSTEM_APP_BANK_ID);
 
-  pebble_task_create(PebbleTask_App, &task_params, &s_app_task_context.task_handle);
+  pebble_task_create(PebbleTask_App, &task_params, (TaskHandle_t*)&s_app_task_context.task_handle);
 
   // Always notify the phone that the application is running
   app_run_state_send_update(&app_md->uuid, RUNNING);

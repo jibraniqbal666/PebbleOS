@@ -75,9 +75,9 @@ DEFINE_SYSCALL(void, sys_event_service_client_subscribe, EventServiceInfo *handl
   // Get info
   QueueHandle_t *event_queue;
   if (task == PebbleTask_App) {
-    event_queue = app_manager_get_task_context()->to_process_event_queue;
+    event_queue = (QueueHandle_t *)app_manager_get_task_context()->to_process_event_queue;
   } else if (task == PebbleTask_Worker) {
-    event_queue = worker_manager_get_task_context()->to_process_event_queue;
+    event_queue = (QueueHandle_t *)worker_manager_get_task_context()->to_process_event_queue;
   } else if (task == PebbleTask_KernelMain) {
     // The event service always runs from KernelMain
     event_queue = event_kernel_to_kernel_event_queue();

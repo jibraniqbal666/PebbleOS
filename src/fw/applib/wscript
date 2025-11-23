@@ -45,6 +45,10 @@ def build(bld):
     bld.recurse('vendor/tinflate')
     bld.recurse('vendor/uPNG')
 
+    # Exclude Bluetooth files for ESP32-C3 (Bluetooth not yet supported)
+    if bld.is_esp32c3():
+        excludes.append('bluetooth/**')
+
     if bld.variant == 'prf':
         excludes += ['ui/dialogs/actionable_dialog.c',
                      'ui/dialogs/bt_conn_dialog.c',
@@ -86,18 +90,23 @@ def build(bld):
     bld(export_includes=['.'], name='applib_includes')
 
     # Build the stlib
+    use_list = ['target_includes',
+                'fw_includes',
+                'upng',
+                'qr_code_generator',
+                'jerry_port_includes',
+                'jerry_runtime_config',
+                'jerry_common_config',
+                'jerry_core',
+                'freertos_includes',
+                'root_includes']
+    
+    # Only include libbtutil_includes if not ESP32-C3 (Bluetooth not yet supported)
+    if not bld.is_esp32c3():
+        use_list.append('libbtutil_includes')
+    
     bld.stlib(source=sources,
               target='applib',
-              use=['target_includes',
-                   'libbtutil_includes',
-                   'fw_includes',
-                   'upng',
-                   'qr_code_generator',
-                   'jerry_port_includes',
-                   'jerry_runtime_config',
-                   'jerry_common_config',
-                   'jerry_core',
-                   'freertos_includes',
-                   'root_includes'])
+              use=use_list)
 
 # vim:filetype=python

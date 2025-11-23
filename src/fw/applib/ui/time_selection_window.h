@@ -24,7 +24,11 @@
 #include "applib/ui/window.h"
 #include "services/common/clock.h"
 
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"
+#else
 #include <time.h>
+#endif
 
 #define TIME_SELECTION_WINDOW_MAX_RANGE_LENGTH 64
 

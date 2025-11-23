@@ -53,8 +53,15 @@ static void prv_set_syscall_lr(uintptr_t new_lr) {
 }
 
 NORETURN syscall_failed(void) {
+  uint32_t saved_lr;
+#if defined(MICRO_FAMILY_ESP32C3)
+  // For RISC-V, use TLS to get the return address
+  saved_lr = (uint32_t)get_syscall_lr();
+#else
+  // For ARM, read the link register directly
   register uint32_t lr __asm("lr");
-  uint32_t saved_lr = lr;
+  saved_lr = lr;
+#endif
 
   PBL_ASSERT(mcu_state_is_privileged(), "Insufficient Privileges!");
 

@@ -239,7 +239,7 @@ bool worker_manager_launch_new_worker_with_args(const PebbleProcessMd *app_md, c
 
   PBL_LOG(LOG_LEVEL_DEBUG, "Starting %s", task_name);
 
-  pebble_task_create(PebbleTask_Worker, &task_params, &s_worker_task_context.task_handle);
+  pebble_task_create(PebbleTask_Worker, &task_params, (TaskHandle_t*)&s_worker_task_context.task_handle);
 
   // If no default yet, set as the default so that it can be relaunched upon system reset
   if (worker_manager_get_default_install_id() == INSTALL_ID_INVALID) {

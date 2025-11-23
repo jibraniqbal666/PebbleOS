@@ -762,6 +762,9 @@ def _build_normal(bld):
         excludes.append('vector_table.c')  # ESP32-C3 uses ESP-IDF's interrupt handling
         excludes.append('system/profiler.c')  # Profiler not essential for bootloader
         excludes.append('syscall/profiler_syscalls.c')  # Profiler syscalls not essential
+        excludes.append('apps/system_apps/weather/**')  # Weather app not required for boot
+        excludes.append('popups/notifications/notification_window.c')  # Notifications not required for boot
+        excludes.append('apps/system_apps/timeline/text_node.c')  # Timeline text node not required for boot
 
     if not bld.capability('HAS_BUILTIN_HRM'):
         excludes.append('popups/ble_hrm/**')
