@@ -16,7 +16,8 @@
 
 #pragma once
 
-// ESP-IDF's FreeRTOS already defines these types, so don't redefine them for ESP32-C3
+// ESP-IDF's FreeRTOS already defines QueueHandle_t, SemaphoreHandle_t, and TaskHandle_t
+// But we still need to define TaskParameters_t and MemoryRegion_t for ESP32-C3
 #if !defined(MICRO_FAMILY_ESP32C3)
 typedef void * QueueHandle_t;
 
@@ -29,4 +30,17 @@ typedef void (*TaskFunction_t)( void * );
 typedef struct xTASK_PARAMETERS TaskParameters_t;
 
 typedef struct xMEMORY_REGION MemoryRegion_t;
+#else
+// ESP32-C3: ESP-IDF defines QueueHandle_t, SemaphoreHandle_t, TaskHandle_t in FreeRTOS headers
+// Include ESP-IDF's FreeRTOS headers directly to get the types
+// Note: We can't include our FreeRTOS.h wrapper here as it would create circular dependencies
+// Instead, include ESP-IDF's headers directly
+#include "asm_compat.h"  // Needed for ESP-IDF headers
+#include "freertos/FreeRTOSConfig.h"  // Include config first
+#include "freertos/FreeRTOS.h"  // This provides QueueHandle_t, TaskHandle_t, etc.
+
+// Forward declarations for PebbleOS-specific types that aren't in ESP-IDF
+typedef struct xTASK_PARAMETERS TaskParameters_t;
+typedef struct xMEMORY_REGION MemoryRegion_t;
+// TaskFunction_t is defined by ESP-IDF FreeRTOS, so we don't need to redefine it
 #endif

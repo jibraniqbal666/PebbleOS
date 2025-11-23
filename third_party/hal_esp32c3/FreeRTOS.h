@@ -21,14 +21,13 @@
 // Include asm compatibility first
 #include "asm_compat.h"
 
-// Undefine config that might be defined by projdefs.h before FreeRTOSConfig.h redefines it
-// This prevents redefinition warnings/errors
-#ifdef configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES
-#undef configUSE_LIST_DATA_INTEGRITY_CHECK_BYTES
-#endif
+// Include ESP-IDF's FreeRTOSConfig.h FIRST, before any other FreeRTOS headers
+// This ensures config is set before projdefs.h defines defaults
+// ESP-IDF's portmacro.h includes FreeRTOSConfig.h, but we need it included earlier
+#include "freertos/FreeRTOSConfig.h"
 
 // Include ESP-IDF's FreeRTOS.h
 // ESP-IDF FreeRTOS headers are in freertos/ subdirectory
-// FreeRTOS.h will include FreeRTOSConfig.h before projdefs.h
+// FreeRTOS.h includes FreeRTOSConfig.h (already included above, so guarded) and projdefs.h
 #include "freertos/FreeRTOS.h"
 
