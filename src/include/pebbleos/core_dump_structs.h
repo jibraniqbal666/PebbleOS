@@ -24,8 +24,12 @@
  *
  */
 
-#include "portmacro.h"
 #include "util/attributes.h"
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "fw/kernel/portmacro_esp32c3.h"
+#else
+#include "portmacro.h"
+#endif
 
 // Structure of thread info stored within a CORE_DUMP_CHUNK_KEY_THREAD chunk in the core dump
 #define CORE_DUMP_THREAD_NAME_SIZE  16

@@ -16,7 +16,8 @@
 
 #pragma once
 
-
+// ESP-IDF's FreeRTOS already defines these types, so don't redefine them for ESP32-C3
+#if !defined(MICRO_FAMILY_ESP32C3)
 typedef void * QueueHandle_t;
 
 typedef QueueHandle_t SemaphoreHandle_t;
@@ -28,3 +29,4 @@ typedef void (*TaskFunction_t)( void * );
 typedef struct xTASK_PARAMETERS TaskParameters_t;
 
 typedef struct xMEMORY_REGION MemoryRegion_t;
+#endif

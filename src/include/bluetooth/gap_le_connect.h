@@ -28,7 +28,7 @@
 typedef enum BleAddressType {
   BleAddressType_Public,
   BleAddressType_Random
-} BleAddressType;
+} __attribute__((packed)) BleAddressType;
 
 #ifndef __clang__
 _Static_assert(sizeof(BleAddressType) == 1, "BleAddressType is not 1 byte in size");

@@ -18,7 +18,11 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"
+#else
 #include <time.h>
+#endif
 
 void vibes_init();
 

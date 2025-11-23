@@ -22,7 +22,16 @@
 #include "system/passert.h"
 
 #include "FreeRTOS.h"
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "kernel/portmacro_esp32c3.h"
+#else
 #include "portmacro.h"
+#endif
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"
+#else
+#include <time.h>
+#endif
 
 //! Don't let users modify the list while callbacks are occurring.
 static PebbleMutex * s_callback_list_semaphore = 0;

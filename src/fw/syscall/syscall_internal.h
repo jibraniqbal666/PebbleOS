@@ -25,6 +25,12 @@
 //! Any function defined with this macro will be privileged.
 //! Privileges are raised upon entry to the syscall, and dropped
 //! once the syscall is exited (unless the caller was originally privileged).
+#if defined(MICRO_FAMILY_ESP32C3)
+// ESP32-C3 (RISC-V) doesn't support ARM syscall mechanism
+// For now, syscalls are just regular function calls
+#define DEFINE_SYSCALL(retType, funcName, ...) \
+    retType funcName(__VA_ARGS__)
+#else
 #define DEFINE_SYSCALL(retType, funcName, ...) \
   retType NAKED_FUNC SECTION(".syscall_text." #funcName) funcName(__VA_ARGS__) { \
     __asm volatile (\
@@ -35,11 +41,17 @@
     );\
   }\
   EXTERNALLY_VISIBLE retType USED __##funcName(__VA_ARGS__)
+#endif
 
 //! Useful function for checking syscall privileges.
 //! @return True if the most recent syscall originated from userspace, resulting in a privilege escalation.
 //! It can only be called from a function created with DEFINE_SYSCALL
+#if defined(MICRO_FAMILY_ESP32C3)
+// ESP32-C3 doesn't support privilege escalation yet
+#define PRIVILEGE_WAS_ELEVATED (0)
+#else
 #define PRIVILEGE_WAS_ELEVATED (syscall_internal_check_return_address(__builtin_return_address(0)))
+#endif
 
 //! Check if ret_addr points at the drop_privilege code
 bool syscall_internal_check_return_address(void * ret_addr);

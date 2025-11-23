@@ -45,6 +45,8 @@
 #include "flash_region_s29vs.h"
 #elif PLATFORM_OBELIX
 #include "flash_region_gd25q256e.h"
+#elif PLATFORM_ESP32C3
+#include "flash_region_esp32c3.h"
 #endif
 
 #if CAPABILITY_HAS_PBLBOOT

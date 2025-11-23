@@ -22,7 +22,12 @@
 #include "util/attributes.h"
 #include "util/uuid.h"
 
+// For ESP32-C3, use PebbleOS's custom time.h instead of system time.h
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"
+#else
 #include <time.h>
+#endif
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>

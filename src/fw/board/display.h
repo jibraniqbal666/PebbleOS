@@ -89,6 +89,9 @@ typedef struct {
 #include "displays/display_robert.h"
 #elif BOARD_ROBERT_EVT
 #include "displays/display_robert_evt.h"
+#elif BOARD_ESP32C3
+// ESP32-C3 display - minimal stub for now
+#include "displays/display_silk.h"  // Use silk display as template for now
 #else
 #error "Unknown display definition for board"
 #endif // BOARD_*

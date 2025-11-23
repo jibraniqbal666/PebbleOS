@@ -22,7 +22,11 @@
 #include "util/attributes.h"
 #include "pebbleos/core_dump_structs.h"
 
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "kernel/portmacro_esp32c3.h"
+#else
 #include "portmacro.h"
+#endif
 
 // Size of RAM
 // TODO: Do we have an equate for the total size of RAM somewhere else?
@@ -34,6 +38,8 @@
 #define COREDUMP_RAM_SIZE (192 * 1024)
 #elif PLATFORM_TINTIN
 #define COREDUMP_RAM_SIZE (128 * 1024)
+#elif PLATFORM_ESP32C3
+#define COREDUMP_RAM_SIZE (400 * 1024)  // ESP32-C3 has 400KB SRAM
 #endif
 
 // Max number of core dump images we can fit in our allocated space
@@ -49,6 +55,8 @@
 #elif defined(MICRO_FAMILY_NRF52840)
 #define CORE_DUMP_MAX_IMAGES 2
 #elif defined(MICRO_FAMILY_SF32LB52)
+#define CORE_DUMP_MAX_IMAGES 2
+#elif defined(MICRO_FAMILY_ESP32C3)
 #define CORE_DUMP_MAX_IMAGES 2
 #else
 #error "Unsupported micro family"

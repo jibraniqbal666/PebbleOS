@@ -33,7 +33,19 @@ def configure(conf):
 
     conf.load('gcc')
 
-    conf.env.append_value('CFLAGS', ['-std=c11'])
+    conf.env.append_value('CFLAGS', ['-std=c11'])  # C11 standard
+    # Note: Waf should handle C vs C++ based on file extension
+    # If asm keyword issues persist, we may need to ensure files are .c not .cpp
+    
+    # Force include asm_compat.h before any ESP-IDF headers to fix 'asm' keyword issues
+    # This ensures 'asm' is defined as '__asm__' before ESP-IDF headers are processed
+    # Calculate path relative to this tool file's location
+    tool_dir = os.path.dirname(os.path.abspath(__file__))
+    workspace_root = os.path.dirname(tool_dir)  # Go up from waftools/ to workspace root
+    hal_esp32c3_path = os.path.join(workspace_root, 'third_party', 'hal_esp32c3')
+    asm_compat_path = os.path.join(hal_esp32c3_path, 'asm_compat.h')
+    if os.path.exists(asm_compat_path):
+        conf.env.append_value('CFLAGS', ['-include', asm_compat_path])
 
     c_warnings = [
         '-Wall',
@@ -63,6 +75,7 @@ def configure(conf):
         '-ffreestanding',
         '-ffunction-sections',
         '-fbuiltin',
+        '-fshort-enums',  # Use smallest enum size for RISC-V (fixes Bluetooth enum size issues)
     ]
 
     if not conf.options.no_debug:

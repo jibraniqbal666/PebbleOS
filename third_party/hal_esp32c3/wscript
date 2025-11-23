@@ -15,7 +15,7 @@ def configure(conf):
             conf.fatal('ESP-IDF path not found: %s. Set ESP_IDF_PATH environment variable.' % esp_idf_path)
         
         conf.env.append_unique('INCLUDES', [
-            '.',
+            '.',  # This directory contains sdkconfig.h stub
             esp_idf_path + '/components/esp_system/include',
             esp_idf_path + '/components/esp_flash/include',
             esp_idf_path + '/components/driver/include',
@@ -23,9 +23,13 @@ def configure(conf):
             esp_idf_path + '/components/driver/gpio/include',
             esp_idf_path + '/components/esp_common/include',
             esp_idf_path + '/components/esp_hw_support/include',
+            esp_idf_path + '/components/esp_rom/include',  # ROM system headers (esp_rom_sys.h)
+            esp_idf_path + '/components/heap/include',  # Heap management headers (esp_heap_caps.h)
             esp_idf_path + '/components/hal/include',
             esp_idf_path + '/components/hal/esp32c3/include',
             esp_idf_path + '/components/soc/esp32c3/include',
+            esp_idf_path + '/components/soc/esp32c3/register',  # SOC register headers (soc/assist_debug_reg.h, etc.)
+            esp_idf_path + '/components/riscv/include',  # RISC-V specific headers (riscv/csr.h, etc.)
             # ESP-IDF FreeRTOS includes
             esp_idf_path + '/components/freertos/FreeRTOS-Kernel/include',
             esp_idf_path + '/components/freertos/FreeRTOS-Kernel/portable/riscv/include',
@@ -38,6 +42,8 @@ def configure(conf):
             'CONFIG_IDF_TARGET_ESP32C3',
             'ESP_PLATFORM',
             'FREERTOS_CONFIG_H',  # Use ESP-IDF's FreeRTOS config
+            '__riscv',  # Ensure RISC-V is detected (for asm keyword recognition)
+            'RVHAL_EXCM_LEVEL_CLIC=4',  # ESP32-C3 uses legacy INTC, not CLIC. Use RVHAL_EXCM_LEVEL value
         ])
 
 
@@ -46,8 +52,31 @@ def build(bld):
         # Build minimal glue layer
         glue_sources = bld.path.ant_glob('*.c')
         
-        glue_includes = [
-            '.',
+        import os
+        esp_idf_path = os.environ.get('ESP_IDF_PATH', '/Users/jibraniqbal/AndroidStudioProjects/pebble-next/esp-idf')
+        
+        # Export all ESP-IDF include paths so they're available to anything using hal_esp32c3
+        hal_esp32c3_includes = [
+            '.',  # This directory contains sdkconfig.h stub
+            esp_idf_path + '/components/esp_system/include',
+            esp_idf_path + '/components/esp_flash/include',
+            esp_idf_path + '/components/driver/include',
+            esp_idf_path + '/components/driver/uart/include',
+            esp_idf_path + '/components/driver/gpio/include',
+            esp_idf_path + '/components/esp_common/include',
+            esp_idf_path + '/components/esp_hw_support/include',
+            esp_idf_path + '/components/esp_rom/include',  # ROM system headers (esp_rom_sys.h)
+            esp_idf_path + '/components/heap/include',  # Heap management headers (esp_heap_caps.h)
+            esp_idf_path + '/components/hal/include',
+            esp_idf_path + '/components/hal/esp32c3/include',
+            esp_idf_path + '/components/soc/esp32c3/include',
+            esp_idf_path + '/components/soc/esp32c3/register',  # SOC register headers (soc/assist_debug_reg.h, etc.)
+            esp_idf_path + '/components/riscv/include',  # RISC-V specific headers (riscv/csr.h, etc.)
+            # ESP-IDF FreeRTOS includes
+            esp_idf_path + '/components/freertos/FreeRTOS-Kernel/include',
+            esp_idf_path + '/components/freertos/FreeRTOS-Kernel/portable/riscv/include',
+            esp_idf_path + '/components/freertos/include',
+            esp_idf_path + '/components/freertos/esp_additions/include',
         ]
         
         # Create a static library with glue code
@@ -57,6 +86,10 @@ def build(bld):
         if glue_sources:
             bld.stlib(source=glue_sources,
                       target='hal_esp32c3',
-                      includes=glue_includes,
-                      export_includes=glue_includes)
+                      includes=hal_esp32c3_includes,
+                      export_includes=hal_esp32c3_includes)
+        else:
+            # Even if there are no sources, export the includes
+            bld(export_includes=hal_esp32c3_includes,
+                name='hal_esp32c3')
 

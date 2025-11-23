@@ -253,9 +253,13 @@ void workout_service_health_event_handler(PebbleHealthEvent *event) {
   prv_lock();
   {
     if (event->type == HealthEventMovementUpdate) {
-      prv_handle_movement_update(&event->data.movement_update);
+      // Copy the data to avoid taking address of packed struct member
+      HealthEventMovementUpdateData movement_data = event->data.movement_update;
+      prv_handle_movement_update(&movement_data);
     } else if (event->type == HealthEventHeartRateUpdate) {
-      prv_handle_heart_rate_update(&event->data.heart_rate_update);
+      // Copy the data to avoid taking address of packed struct member
+      HealthEventHeartRateUpdateData heart_rate_data = event->data.heart_rate_update;
+      prv_handle_heart_rate_update(&heart_rate_data);
     }
   }
   prv_unlock();

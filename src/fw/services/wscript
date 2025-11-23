@@ -10,10 +10,13 @@ def build(bld):
         use = [
             'fw_includes',
             'freertos_includes',
-            'bt_driver',
             'root_includes',
             'speex_includes',
         ]
+
+        # Only include bt_driver if not ESP32-C3 (ESP32-C3 BT support not yet implemented)
+        if not bld.is_esp32c3():
+            use.append('bt_driver')
 
         if bld.is_asterix() or bld.is_obelix():
             use.append('nrf_fuel_gauge')
@@ -71,6 +74,12 @@ def build(bld):
 
             if not bld.capability('HAS_MICROPHONE'):
                 excludes.append('normal/voice/**')
+
+            # Exclude Bluetooth-related files for ESP32-C3 (not yet supported)
+            if bld.is_esp32c3():
+                excludes.append('common/bluetooth/**')
+                excludes.append('normal/bluetooth/**')
+                excludes.append('common/shared_prf_storage/shared_prf_storage_debug.c')
 
             return excludes
 

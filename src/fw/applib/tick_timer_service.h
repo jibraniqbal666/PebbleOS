@@ -16,7 +16,12 @@
 
 #pragma once
 
+// For ESP32-C3, use PebbleOS's custom time.h instead of system time.h
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"
+#else
 #include <time.h>
+#endif
 
 
 //! @addtogroup Foundation

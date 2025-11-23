@@ -23,7 +23,7 @@ typedef enum {
   HciStatusCode_UnknownConnectionIdentifier = 0x02,
   HciStatusCode_VS_Base = 0x50,
   HciStatusCode_Max = UINT16_MAX
-} HciStatusCode;
+} __attribute__((packed)) HciStatusCode;
 
 #ifndef __clang__
 _Static_assert(sizeof(HciStatusCode) == 2, "packed structs expect the status code to be 2 bytes!");

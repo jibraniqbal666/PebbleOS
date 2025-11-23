@@ -40,6 +40,8 @@ typedef enum PlatformType {
     #define PBL_PLATFORM_TYPE_CURRENT PlatformTypeEmery
   #elif PLATFORM_ASTERIX
     #define PBL_PLATFORM_TYPE_CURRENT PlatformTypeFlint
+  #elif PLATFORM_ESP32C3
+    #define PBL_PLATFORM_TYPE_CURRENT PlatformTypeAplite  // Use Aplite as default for ESP32-C3
   #else
     #error "PBL_PLATFORM_TYPE_CURRENT couldn't be determined: No PLATFORM_* defined!"
   #endif
@@ -56,6 +58,8 @@ typedef enum PlatformType {
     #define PBL_PLATFORM_TYPE_CURRENT PlatformTypeEmery
   #elif PBL_PLATFORM_FLINT
     #define PBL_PLATFORM_TYPE_CURRENT PlatformTypeFlint
+  #elif PBL_PLATFORM_ESP32C3 || defined(PLATFORM_ESP32C3)
+    #define PBL_PLATFORM_TYPE_CURRENT PlatformTypeAplite  // Use Aplite as default for ESP32-C3
   #else
     #error "PBL_PLATFORM_TYPE_CURRENT couldn't be determined: No PBL_PLATFORM_* defined!"
   #endif

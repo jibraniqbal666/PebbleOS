@@ -30,7 +30,11 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"
+#else
 #include <time.h>
+#endif
 
 #define DLS_HEXDUMP(data, length) \
           PBL_HEXDUMP_D(LOG_DOMAIN_DATA_LOGGING, LOG_LEVEL_DEBUG, data, length)

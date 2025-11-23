@@ -3,14 +3,25 @@ import waftools
 
 def build(bld):
     sources = bld.path.ant_glob('**/*.c')
+    
+    # Exclude ARM-specific files for non-ARM platforms
+    if bld.is_esp32c3():
+        # ESP32-C3 is RISC-V, exclude ARM-specific files and add RISC-V stubs
+        sources = [s for s in sources if not s.name.endswith('_arm.c')]
+        # Add RISC-V specific implementations
+        sources.append(bld.path.make_node('mcu/fpu_riscv.c'))
 
     def build_lib(target, env, platform_uses):
         # Build the directory using firmware environment
+        use_list = ['pblibc_includes', 'libutil_includes'] + platform_uses
+        # For ESP32-C3, ensure freertos_includes and hal_esp32c3 are available
+        if bld.is_esp32c3():
+            use_list.append('freertos_includes')
+            use_list.append('hal_esp32c3')
         bld.stlib(source=sources,
                   target=target,
                   includes=['.', 'include'],
-                  use=['pblibc_includes',
-                       'libutil_includes'] + platform_uses,
+                  use=use_list,
                   env=env.derive())
 
     bld(export_includes=['include'], name='libos_includes')

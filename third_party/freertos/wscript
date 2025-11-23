@@ -7,12 +7,30 @@ def build(bld):
         esp_idf_path = os.environ.get('ESP_IDF_PATH', '/Users/jibraniqbal/AndroidStudioProjects/pebble-next/esp-idf')
         
         # ESP-IDF FreeRTOS include paths
+        # ESP-IDF FreeRTOS headers are in freertos/ subdirectory
+        # Note: sdkconfig.h stub is provided by hal_esp32c3
+        hal_esp32c3_path = os.path.join(os.path.dirname(bld.path.abspath()), 'hal_esp32c3')
         freertos_includes = [
-            '.',
-            esp_idf_path + '/components/freertos/FreeRTOS-Kernel/include',
+            esp_idf_path + '/components/freertos/config/include',  # Contains FreeRTOSConfig.h - MUST be first to avoid redefinition
+            hal_esp32c3_path,  # Contains sdkconfig.h stub and freertos_wrapper.h
+            esp_idf_path + '/components/freertos/config/riscv/include',  # Contains FreeRTOSConfig_arch.h
+            esp_idf_path + '/components/freertos/FreeRTOS-Kernel/include',  # ESP-IDF's FreeRTOS.h (at freertos/FreeRTOS.h)
             esp_idf_path + '/components/freertos/FreeRTOS-Kernel/portable/riscv/include',
+            esp_idf_path + '/components/freertos/FreeRTOS-Kernel/portable/riscv/include/freertos',  # For portable.h to find portmacro.h
             esp_idf_path + '/components/freertos/include',
             esp_idf_path + '/components/freertos/esp_additions/include',
+            esp_idf_path + '/components/riscv/include',  # RISC-V specific headers (riscv/csr.h, etc.)
+            esp_idf_path + '/components/esp_hw_support/include',  # Needed for spinlock.h -> esp_cpu.h
+            esp_idf_path + '/components/esp_rom/include',  # ROM system headers (esp_rom_sys.h)
+            esp_idf_path + '/components/heap/include',  # Heap management headers (esp_heap_caps.h)
+            esp_idf_path + '/components/newlib/platform_include',  # Contains esp_newlib.h
+            esp_idf_path + '/components/soc/esp32c3/include',
+            esp_idf_path + '/components/soc/esp32c3/register',  # SOC register headers (soc/assist_debug_reg.h, etc.)
+            '.',  # Current directory (for relative includes)
+            # PebbleOS FreeRTOS includes for light_mutex.h
+            # Note: This path is AFTER ESP-IDF paths, so ESP-IDF's FreeRTOS.h will be found first
+            # But we still need access to light_mutex.h from PebbleOS's FreeRTOS
+            'FreeRTOS-Kernel/FreeRTOS/Source/include',  # Contains light_mutex.h
         ]
         
         freertos_defines = [

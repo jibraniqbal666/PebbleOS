@@ -51,13 +51,23 @@
 #include "util/attributes.h"
 
 #include "freertos_types.h"
+// For ESP32-C3, portmacro.h is provided by ESP-IDF FreeRTOS
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "kernel/portmacro_esp32c3.h"  // Wrapper that includes ESP-IDF FreeRTOS portable.h
+#else
 #include "portmacro.h"
+#endif
 
 #include <bluetooth/bluetooth_types.h>
 
 #include <stdint.h>
 #include <stdbool.h>
+// For ESP32-C3, use PebbleOS's custom time.h instead of system time.h
+#if defined(MICRO_FAMILY_ESP32C3)
+#include "util/time/time.h"
+#else
 #include <time.h>
+#endif
 
 typedef struct PebblePhoneCaller PebblePhoneCaller;
 

@@ -90,6 +90,8 @@ def options(opt):
     opt.load('show_configure', tooldir='waftools')
     opt.recurse('applib-targets')
     opt.recurse('tests')
+    # Always recurse Bluetooth options (options phase just defines options)
+    # We'll skip actual building in configure/build phases for ESP32-C3
     opt.recurse('src/bluetooth-fw')
     opt.recurse('src/fw')
     opt.recurse('src/idl')
@@ -597,13 +599,20 @@ def configure(conf):
     elif conf.is_obelix():
         conf.env.bt_controller = 'sf32lb52'
         conf.env.append_value('DEFINES', ['BT_CONTROLLER_SF32LB52'])
+    elif conf.is_esp32c3():
+        # ESP32-C3 Bluetooth support not yet implemented
+        # Skip Bluetooth driver for now
+        conf.env.bt_controller = 'none'
+        # Don't recurse into bluetooth-fw for ESP32-C3
     else:
         conf.env.bt_controller = 'da14681-00'
         conf.env.append_value('DEFINES', ['BT_CONTROLLER_DA14681'])
 
     _create_cm0_env(conf)
 
-    conf.recurse('src/bluetooth-fw')
+    # Skip Bluetooth driver for ESP32-C3 (not yet supported)
+    if not conf.is_esp32c3():
+        conf.recurse('src/bluetooth-fw')
 
     Logs.pprint('CYAN', 'Configuring firmware environment')
     conf.setenv('', base_env)
@@ -809,7 +818,9 @@ def build(bld):
         bld.recurse('src/include')
         bld.recurse('third_party/jerryscript')
         bld.recurse('third_party/nanopb')
-        bld.recurse('src/libbtutil')
+        # Skip Bluetooth libraries for ESP32-C3 (not yet supported)
+        if not bld.is_esp32c3():
+            bld.recurse('src/libbtutil')
         bld.recurse('src/libos')
         bld.recurse('src/libutil')
         bld.recurse('tests')
@@ -832,8 +843,10 @@ def build(bld):
 
     bld.recurse('third_party')
     bld.recurse('src/include')
-    bld.recurse('src/libbtutil')
-    bld.recurse('src/bluetooth-fw')
+    # Skip Bluetooth libraries for ESP32-C3 (not yet supported)
+    if not bld.is_esp32c3():
+        bld.recurse('src/libbtutil')
+        bld.recurse('src/bluetooth-fw')
     bld.recurse('src/libc')
     bld.recurse('src/libos')
     bld.recurse('src/libutil')

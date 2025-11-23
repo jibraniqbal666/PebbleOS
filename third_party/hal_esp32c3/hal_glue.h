@@ -27,3 +27,15 @@
 #define CONFIG_IDF_TARGET_ESP32C3
 #endif
 
+// ESP32-C3 uses legacy INTC, not CLIC
+// Provide compatibility define for RVHAL_EXCM_LEVEL_CLIC
+// This is used by spinlock.h even though ESP32-C3 doesn't support CLIC
+// Note: RVHAL_EXCM_LEVEL is defined in riscv/rv_utils.h which is included
+// before spinlock.h uses RVHAL_EXCM_LEVEL_CLIC, so we can reference it here
+#ifndef RVHAL_EXCM_LEVEL_CLIC
+// This will be defined after riscv/rv_utils.h is included
+// We'll define it as a macro that expands to RVHAL_EXCM_LEVEL
+// The actual value (4) is defined in riscv/rv_utils.h
+#define RVHAL_EXCM_LEVEL_CLIC 4  // Same as RVHAL_EXCM_LEVEL for ESP32-C3
+#endif
+

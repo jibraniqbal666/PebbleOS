@@ -20,9 +20,19 @@
 #include "os/mutex.h"
 #include "os/tick.h"
 
+#if defined(MICRO_FAMILY_ESP32C3)
+// Include asm compatibility first for ESP32-C3
+// hal_esp32c3 directory is in include path, so include asm_compat.h directly
+#include "asm_compat.h"
+// Include FreeRTOSConfig.h first to avoid redefinition errors
+#include "freertos/FreeRTOSConfig.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#else
 #include "FreeRTOS.h"
-#include "light_mutex.h"
 #include "task.h"
+#endif
+#include "light_mutex.h"
 
 #include <string.h>
 

@@ -26,7 +26,12 @@ static VibeScoreId prv_get_resource_for_client(VibeClient client) {
   if (client == VibeClient_AlarmsLPM) {
     return VibeScoreId_AlarmsLPM;
   }
+#if CAPABILITY_HAS_VIBE_SCORES
   return alerts_preferences_get_vibe_score_for_client(client);
+#else
+  // ESP32-C3 doesn't support vibe scores, return disabled
+  return VibeScoreId_Disabled;
+#endif
 }
 
 VibeScore *vibe_client_get_score(VibeClient client) {
