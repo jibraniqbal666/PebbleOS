@@ -1,0 +1,98 @@
+import os
+import sys
+import waflib.Logs
+
+sys.path.append(os.path.abspath('waftools'))
+import objcopy
+import gitinfo
+
+
+def options(opt):
+    opt.load('compiler_c')
+    opt.add_option('--board', action='store', default='esp32c3',
+                   help='Which board to build for '
+                   '(esp32c3)',
+                   choices=['esp32c3'])
+    opt.add_option('--nowatchdog', action='store_true',
+                   help='Do not enable watchdog timer or reset upon failure')
+    opt.add_option('--loglevel', type='int', default=0,
+                   help='Set the logging verbosity [default: %default]')
+
+
+def configure(conf):
+    # RISC-V ESP32-C3 CPU flags
+    CPU_FLAGS = [
+        '-march=rv32imc', '-mabi=ilp32',
+        ]
+    OPT_FLAGS = [ '-Os' ,'-g' ]
+    C_FLAGS = [
+        '-std=c11', '-ffunction-sections',
+        '-Wall', '-Wextra', '-Werror', '-Wpointer-arith',
+        '-Wno-unused-parameter', '-Wno-missing-field-initializers',
+        '-Wno-error=unused-function', '-Wno-error=unused-variable',
+        '-Wno-error=unused-parameter', '-Wno-error=unused-but-set-variable',
+        ]
+
+    conf.find_program('riscv32-esp-elf-gcc', var='CC', mandatory=True)
+    conf.env.AS = conf.env.CC
+    for tool in 'ar objcopy'.split():
+        conf.find_program('riscv32-esp-elf-' + tool, var=tool.upper(),
+                          mandatory=True)
+    conf.env.BOARD = conf.options.board
+    conf.env.append_value('CFLAGS', CPU_FLAGS + OPT_FLAGS + C_FLAGS)
+    conf.env.append_value('DEFINES', [
+        'BOARD_{}=1'.format(conf.options.board.upper()),
+        'BOOTLOADER_LENGTH=32768',  # 32KB bootloader
+        ])
+
+    conf.env.append_unique('LINKFLAGS',
+            ['-Wl,--gc-sections', '-Wl,-Map,esp32c3_boot.map']
+            + CPU_FLAGS + OPT_FLAGS)
+
+    if conf.options.nowatchdog:
+        conf.env.append_value('DEFINES', 'NO_WATCHDOG')
+
+    if conf.options.loglevel >= 1:
+        conf.env.append_value('DEFINES', 'PBL_LOG_ENABLED')
+    if conf.options.loglevel >= 2:
+        conf.env.append_value('DEFINES', 'VERBOSE_LOGGING')
+
+    conf.env.BOOTLOADER_LENGTH = '32768'
+    conf.env.append_value(
+            'DEFINES', 'BOOTLOADER_LENGTH=' + conf.env.BOOTLOADER_LENGTH)
+
+    conf.load('gcc gas objcopy ldscript')
+    conf.load('binary_header')
+
+    conf.recurse('vendor')
+
+
+def build(bld):
+    if bld.cmd == 'install':
+        raise Exception("install isn't a supported command. Did you mean flash?")
+
+    linkflags = ['-Wl,-Map,esp32c3_boot.map']
+
+    sources = (
+            bld.path.ant_glob('src/*.S') +
+            bld.path.ant_glob('src/**/*.c'))
+
+    bld(features='subst',
+        source='src/git_version.auto.h.in',
+        target='src/git_version.auto.h',
+        **gitinfo.get_git_revision(bld))
+
+    bld.recurse('vendor')
+    bld(features='c asm cprogram objcopy',
+        source=sources,
+        includes=['src', 'src/board'],
+        target='esp32c3_boot.elf',
+        ldscript='src/linker.ld',
+        linkflags=linkflags,
+        objcopy_bfdname='ihex',
+        objcopy_target='esp32c3_boot.hex',
+        use='hal_esp32c3',
+        lib=['gcc'])
+    bld(rule=objcopy.objcopy_simple_bin, source='esp32c3_boot.elf', target='esp32c3_boot.bin')
+# vim:filetype=python
+

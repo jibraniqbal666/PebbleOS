@@ -1,0 +1,62 @@
+def configure(conf):
+    if conf.env.MICRO_FAMILY == 'ESP32C3':
+        # ESP-IDF configuration
+        # Note: ESP-IDF should be installed separately or added as submodule
+        # This assumes ESP-IDF is available in the environment
+        
+        # Add ESP-IDF include paths
+        # These would typically come from ESP-IDF's build system
+        # For now, we'll set up basic paths that would be provided by ESP-IDF
+        import os
+        esp_idf_path = os.environ.get('ESP_IDF_PATH', '/Users/jibraniqbal/AndroidStudioProjects/pebble-next/esp-idf')
+        
+        # Verify ESP-IDF path exists
+        if not os.path.isdir(esp_idf_path):
+            conf.fatal('ESP-IDF path not found: %s. Set ESP_IDF_PATH environment variable.' % esp_idf_path)
+        
+        conf.env.append_unique('INCLUDES', [
+            '.',
+            esp_idf_path + '/components/esp_system/include',
+            esp_idf_path + '/components/esp_flash/include',
+            esp_idf_path + '/components/driver/include',
+            esp_idf_path + '/components/driver/uart/include',
+            esp_idf_path + '/components/driver/gpio/include',
+            esp_idf_path + '/components/esp_common/include',
+            esp_idf_path + '/components/esp_hw_support/include',
+            esp_idf_path + '/components/hal/include',
+            esp_idf_path + '/components/hal/esp32c3/include',
+            esp_idf_path + '/components/soc/esp32c3/include',
+            # ESP-IDF FreeRTOS includes
+            esp_idf_path + '/components/freertos/FreeRTOS-Kernel/include',
+            esp_idf_path + '/components/freertos/FreeRTOS-Kernel/portable/riscv/include',
+            esp_idf_path + '/components/freertos/include',
+            esp_idf_path + '/components/freertos/esp_additions/include',
+        ])
+        
+        # ESP32-C3 specific defines
+        conf.env.append_unique('DEFINES', [
+            'CONFIG_IDF_TARGET_ESP32C3',
+            'ESP_PLATFORM',
+            'FREERTOS_CONFIG_H',  # Use ESP-IDF's FreeRTOS config
+        ])
+
+
+def build(bld):
+    if bld.env.MICRO_FAMILY == 'ESP32C3':
+        # Build minimal glue layer
+        glue_sources = bld.path.ant_glob('*.c')
+        
+        glue_includes = [
+            '.',
+        ]
+        
+        # Create a static library with glue code
+        # Note: ESP-IDF libraries would need to be linked separately
+        # This is a placeholder - actual ESP-IDF integration would require
+        # linking against ESP-IDF's build system or pre-built libraries
+        if glue_sources:
+            bld.stlib(source=glue_sources,
+                      target='hal_esp32c3',
+                      includes=glue_includes,
+                      export_includes=glue_includes)
+

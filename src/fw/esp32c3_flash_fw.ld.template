@@ -1,0 +1,40 @@
+MEMORY
+{
+    KERNEL_RAM  (xrw) : ORIGIN = @KERNEL_RAM_ADDR@, LENGTH = @KERNEL_RAM_SIZE@
+    WORKER_RAM (xrw)  : ORIGIN = @WORKER_RAM_ADDR@, LENGTH = @WORKER_RAM_SIZE@
+    APP_RAM (xrw)     : ORIGIN = @APP_RAM_ADDR@,    LENGTH = @APP_RAM_SIZE@
+
+    /* ESP32-C3 flash memory layout */
+    /* Bootloader is at 0x0, firmware starts after bootloader */
+    FLASH (rx) : ORIGIN = @FW_FLASH_ORIGIN@, LENGTH = @FW_FLASH_LENGTH@
+}
+
+__FLASH_start__ = @FLASH_ORIGIN@;
+__FLASH_size__ = @FLASH_SIZE@;
+
+REGION_ALIAS("REGION_ISR_STACK", KERNEL_RAM);
+REGION_ALIAS("REGION_KERNEL_STACKS", KERNEL_RAM);
+REGION_ALIAS("REGION_KERNEL_HEAP", KERNEL_RAM);
+
+SECTIONS {
+    /* ESP32-C3 uses RISC-V, so vector table handling may differ */
+    /* For now, use a simple section layout */
+    .text : {
+        *(.text .text.*)
+    } >FLASH
+
+    .rodata : {
+        *(.rodata .rodata.*)
+    } >FLASH
+
+    .data : {
+        *(.data .data.*)
+    } >KERNEL_RAM AT >FLASH
+
+    .bss : {
+        *(.bss .bss.*)
+    } >KERNEL_RAM
+}
+
+/* vim: set filetype=ld: */
+
