@@ -454,6 +454,23 @@ elif bld.is_asterix() or bld.is_obelix():
             'root_includes',
         ],
     )
+elif bld.is_esp32c3():
+    # ESP32-C3: Battery/voltage monitor not essential for bootloader
+    # Exclude voltage monitor files that use ARM-specific ADC types
+    # Use stub implementations instead
+    bld.objects(
+        name='driver_battery',
+        source=[
+            'battery/battery_common.c',
+            'stubs/battery.c',  # Stub implementations for battery functions
+            # Exclude battery_pmic.c and battery_voltage_monitor.c for ESP32-C3
+            # These use ARM-specific ADC and voltage monitor types
+        ],
+        use=[
+            'fw_includes',
+            'root_includes',
+        ],
+    )
 else:
     bld.objects(
         name='driver_battery',
